@@ -1,0 +1,335 @@
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = 'Stop'
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$gameRoot = Split-Path -Parent $projectRoot
+$payloadRoot = Join-Path $projectRoot 'payload'
+$sourcesRoot = Join-Path $projectRoot 'sources'
+. (Join-Path $projectRoot 'scripts\GuildrunV21.Common.ps1')
+$policy = Get-GuildrunV21Policy
+$passed = 0
+$failed = 0
+$results = New-Object System.Collections.Generic.List[string]
+
+function Assert-True([bool] $Condition, [string] $Message) {
+    if (-not $Condition) { throw $Message }
+}
+
+function Invoke-Test([string] $Name, [scriptblock] $Body) {
+    try {
+        & $Body
+        $script:passed++
+        $results.Add("OK  $Name")
+    }
+    catch {
+        $script:failed++
+        $results.Add("ECHEC  $Name : $($_.Exception.Message)")
+    }
+}
+
+function New-Fixture([string] $Name) {
+    $root = Join-Path $workRoot $Name
+    $bundleRoot = Join-Path $root 'Guildrun_Data\StreamingAssets\aa\StandaloneWindows64'
+    New-Item -ItemType Directory -Path $bundleRoot -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun.exe') -Destination $root
+    Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun_Data\StreamingAssets\aa\StandaloneWindows64\localization-string-tables-english(en)_assets_all.bundle') -Destination $bundleRoot
+    Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun_Data\StreamingAssets\aa\StandaloneWindows64\localization-string-tables-french(fr)_assets_all.bundle') -Destination $bundleRoot
+    Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun_Data\StreamingAssets\aa\StandaloneWindows64\localization-locales_assets_all.bundle') -Destination $bundleRoot
+    Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun_Data\StreamingAssets\aa\catalog.bin') -Destination (Split-Path -Parent $bundleRoot)
+    $root
+}
+
+function Get-ContentHashes([string] $Root) {
+    $paths = Get-GuildrunV21Paths -GameRoot $Root -PayloadRoot $payloadRoot -Policy $policy
+    [ordered]@{
+        Executable = Get-GuildrunSha256 $paths.Executable
+        English = Get-GuildrunSha256 $paths.English
+        French = Get-GuildrunSha256 $paths.French
+        Locales = Get-GuildrunSha256 $paths.Locales
+        Catalog = Get-GuildrunSha256 $paths.Catalog
+    }
+}
+
+function New-MockRegistry([bool] $Exists, [string] $Kind, $Value) {
+    $store = @{
+        Exists = $Exists
+        Kind = $(if ($Exists) { $Kind } else { $null })
+        Value = $(if ($Value -is [byte[]]) { [byte[]]$Value.Clone() } else { $Value })
+    }
+    $reader = {
+        param($path, $name)
+        [pscustomobject]@{
+            Exists = [bool]$store.Exists
+            Kind = $store.Kind
+            Value = $(if ($store.Value -is [byte[]]) { [byte[]]$store.Value.Clone() } elseif ($store.Value -is [string[]]) { [string[]]$store.Value.Clone() } else { $store.Value })
+        }
+    }.GetNewClosure()
+    $writer = {
+        param($path, $name, $newValue)
+        $store.Exists = $true
+        $store.Kind = 'Binary'
+        $store.Value = [byte[]]$newValue.Clone()
+    }.GetNewClosure()
+    $restorer = {
+        param($path, $name, $state)
+        $store.Exists = [bool]$state.Exists
+        $store.Kind = $state.Kind
+        $store.Value = $(if ($state.Value -is [byte[]]) { [byte[]]$state.Value.Clone() } elseif ($state.Value -is [string[]]) { [string[]]$state.Value.Clone() } else { $state.Value })
+    }.GetNewClosure()
+    [pscustomobject]@{ Store = $store; Reader = $reader; Writer = $writer; Restorer = $restorer }
+}
+
+function Get-LocaleRecords([string] $BundlePath) {
+    $manager = New-Object AssetsTools.NET.Extra.AssetsManager
+    $bundle = $manager.LoadBundleFile([IO.Path]::GetFullPath($BundlePath), $true)
+    $assets = $manager.LoadAssetsFileFromBundle($bundle, 0, $false)
+    $records = @()
+    foreach ($info in $assets.file.GetAssetsOfType([AssetsTools.NET.Extra.AssetClassID]::MonoBehaviour)) {
+        try {
+            $base = $manager.GetBaseField($assets, $info)
+            $code = $base.Get('m_Identifier').Get('m_Code').AsString
+            if ([string]::IsNullOrWhiteSpace($code)) { continue }
+            $comments = @()
+            $registry = $base.Get('references').AsManagedReferencesRegistry
+            foreach ($reference in $registry.references) {
+                if ($reference.data.TypeName -eq 'Comment') { $comments += $reference.data.Get('m_CommentText').AsString }
+            }
+            $records += [pscustomobject]@{
+                Name = $base.Get('m_Name').AsString
+                Code = $code
+                PathId = $info.PathId
+                MetadataCount = $base.Get('m_Metadata').Get('m_Items').Get('Array').Children.Count
+                Comments = $comments
+            }
+        }
+        catch { }
+    }
+    $records
+}
+
+function Get-ObjectHashes([string] $BundlePath) {
+    $manager = New-Object AssetsTools.NET.Extra.AssetsManager
+    $bundle = $manager.LoadBundleFile([IO.Path]::GetFullPath($BundlePath), $true)
+    $assets = $manager.LoadAssetsFileFromBundle($bundle, 0, $false)
+    $map = @{}
+    foreach ($info in $assets.file.AssetInfos) {
+        $assets.file.Reader.Position = $info.GetAbsoluteByteOffset($assets.file)
+        $bytes = $assets.file.Reader.ReadBytes([int]$info.ByteSize)
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try { $map[$info.PathId.ToString()] = ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '') }
+        finally { $sha.Dispose() }
+    }
+    $map
+}
+
+function Get-BundleInternalCrc([string] $BundlePath) {
+    [uint32] $crc = [uint32]::MaxValue
+    $table = New-Object 'System.UInt32[]' 256
+    for ($i = 0; $i -lt 256; $i++) {
+        [uint32] $value = $i
+        for ($bit = 0; $bit -lt 8; $bit++) {
+            if (($value -band 1) -ne 0) { $value = [uint32]([uint32]0xEDB88320L -bxor ($value -shr 1)) }
+            else { $value = [uint32]($value -shr 1) }
+        }
+        $table[$i] = $value
+    }
+    $manager = New-Object AssetsTools.NET.Extra.AssetsManager
+    $bundle = $manager.LoadBundleFile([IO.Path]::GetFullPath($BundlePath), $true)
+    $directory = $bundle.file.BlockAndDirInfo.DirectoryInfos[0]
+    $bundle.file.DataReader.Position = $directory.Offset
+    foreach ($byte in $bundle.file.DataReader.ReadBytes([int]$directory.DecompressedSize)) {
+        $crc = [uint32]($table[($crc -bxor $byte) -band 0xFF] -bxor ($crc -shr 8))
+    }
+    [uint32]($crc -bxor [uint32]::MaxValue)
+}
+
+$dll = Join-Path $projectRoot 'tools\vendor\AssetsTools.NET.dll'
+[void][Reflection.Assembly]::LoadFrom($dll)
+$workRoot = Join-Path $PSScriptRoot ('.work-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $workRoot | Out-Null
+
+try {
+    Invoke-Test 'La build Steam officielle 0.5.3/748 est reconnue par ses SHA-256' {
+        $paths = Get-GuildrunV21Paths -GameRoot $gameRoot -PayloadRoot $payloadRoot -Policy $policy
+        Assert-True ((Get-GuildrunV21State $paths $policy).Name -eq 'Original') 'Etat Steam non officiel.'
+    }
+
+    $officialRecords = Get-LocaleRecords (Join-Path $sourcesRoot 'localization-locales_assets_all.bundle.official')
+    $patchedRecords = Get-LocaleRecords (Join-Path $payloadRoot 'localization-locales_assets_all.bundle')
+    Invoke-Test 'French apparait dans AvailableLocales apres suppression de Comment=EDITOR' {
+        $french = $patchedRecords | Where-Object Code -eq 'fr'
+        Assert-True ($french.PathId -eq 996707670718014713) 'PathID French incorrect.'
+        Assert-True ($french.Name -eq 'French (fr)') 'Nom French modifie.'
+        Assert-True (-not ($french.Comments -contains 'EDITOR')) 'French est toujours marque EDITOR.'
+        $available = $patchedRecords | Where-Object { -not ($_.Comments -contains 'EDITOR') }
+        Assert-True ($available.Code -contains 'fr') 'French reste filtre.'
+    }
+
+    Invoke-Test 'Japanese reste masque avec son Comment=EDITOR intact' {
+        $japanese = $patchedRecords | Where-Object Code -eq 'ja'
+        Assert-True ($japanese.Comments -contains 'EDITOR') 'Comment Japanese a change.'
+        $available = $patchedRecords | Where-Object { -not ($_.Comments -contains 'EDITOR') }
+        Assert-True (-not ($available.Code -contains 'ja')) 'Japanese devient visible.'
+    }
+
+    Invoke-Test 'Seul objet Locale French change dans le bundle Locales' {
+        $before = Get-ObjectHashes (Join-Path $sourcesRoot 'localization-locales_assets_all.bundle.official')
+        $after = Get-ObjectHashes (Join-Path $payloadRoot 'localization-locales_assets_all.bundle')
+        $changed = @($before.Keys | Where-Object { $before[$_] -ne $after[$_] })
+        Assert-True ($changed.Count -eq 1 -and $changed[0] -eq '996707670718014713') ("Objets modifies : " + ($changed -join ','))
+    }
+
+    Invoke-Test 'Le Locale selectionne est exactement fr' {
+        $capture = @{}
+        Set-GuildrunFrenchLocale -RegistryWriter { param($path,$name,$value) $capture.Path=$path; $capture.Name=$name; $capture.Value=$value }.GetNewClosure()
+        Assert-True ($capture.Name -eq 'selected-locale_h3890535593') 'Nom de valeur registre incorrect.'
+        Assert-True (([Text.Encoding]::UTF8.GetString($capture.Value)).Trim([char]0) -eq 'fr') 'Valeur registre differente de fr.'
+    }
+
+    Invoke-Test 'Le catalogue charge les textes French traduits et le bundle Locales patche' {
+        $catalog = [IO.File]::ReadAllBytes((Join-Path $payloadRoot 'catalog.bin'))
+        $frenchCrc = Get-BundleInternalCrc (Join-Path $payloadRoot $policy.FrenchBundleName)
+        $localesCrc = Get-BundleInternalCrc (Join-Path $payloadRoot $policy.LocalesBundleName)
+        Assert-True ([BitConverter]::ToUInt32($catalog, 6143) -eq $frenchCrc) 'CRC French du catalogue incorrect.'
+        Assert-True ([BitConverter]::ToUInt32($catalog, 4723) -eq $localesCrc) 'CRC Locales du catalogue incorrect.'
+        Assert-True ((Get-GuildrunSha256 (Join-Path $payloadRoot $policy.FrenchBundleName)) -eq $policy.PatchedFrenchHash) 'Bundle French traduit incorrect.'
+    }
+
+    $installRoot = New-Fixture 'install-restore'
+    $beforeInstall = Get-ContentHashes $installRoot
+    $installRegistry = New-MockRegistry $false $null $null
+    Invoke-Test 'Installation transactionnelle reussie sur les trois fichiers' {
+        $result = Invoke-GuildrunV21Install -GameRoot $installRoot -PayloadRoot $payloadRoot -RegistryReader $installRegistry.Reader -RegistryWriter $installRegistry.Writer -RegistryRestorer $installRegistry.Restorer
+        Assert-True ($result.State -eq 'Installed') 'Installation non terminee.'
+        $after = Get-ContentHashes $installRoot
+        Assert-True ($after.French -eq $policy.PatchedFrenchHash -and $after.Locales -eq $policy.PatchedLocalesHash -and $after.Catalog -eq $policy.PatchedCatalogHash) 'Triplet V2.1 incomplet.'
+    }
+
+    Invoke-Test 'Le bundle English reste strictement intact pendant installation' {
+        $after = Get-ContentHashes $installRoot
+        Assert-True ($after.English -eq $beforeInstall.English -and $after.English -eq $policy.OriginalEnglishHash) 'English a change.'
+    }
+
+    Invoke-Test 'Seuls les trois fichiers de jeu prevus changent' {
+        $after = Get-ContentHashes $installRoot
+        $changed = @($beforeInstall.Keys | Where-Object { $beforeInstall[$_] -ne $after[$_] })
+        Assert-True (($changed -join ',') -eq 'French,Locales,Catalog') ("Fichiers changes : " + ($changed -join ','))
+    }
+
+    Invoke-Test 'La sauvegarde locale contient les trois originaux exacts' {
+        $paths = Get-GuildrunV21Paths $installRoot $payloadRoot $policy
+        $backup = Read-GuildrunPersistentBackup $paths
+        Assert-True ($backup.FrenchHash -eq $policy.OriginalFrenchHash -and $backup.LocalesHash -eq $policy.OriginalLocalesHash -and $backup.CatalogHash -eq $policy.OriginalCatalogHash) 'Sauvegarde inexacte.'
+        Assert-True (-not $backup.RegistryState.Exists) 'Absence initiale de la preference non sauvegardee.'
+    }
+
+    Invoke-Test 'La restauration remet exactement les trois fichiers officiels et supprime une preference initialement absente' {
+        Invoke-GuildrunV21Restore -GameRoot $installRoot -PayloadRoot $payloadRoot -RegistryReader $installRegistry.Reader -RegistryRestorer $installRegistry.Restorer | Out-Null
+        $restored = Get-ContentHashes $installRoot
+        foreach ($name in $beforeInstall.Keys) { Assert-True ($restored[$name] -eq $beforeInstall[$name]) "$name non restaure." }
+        Assert-True (-not $installRegistry.Store.Exists) 'Preference initialement absente non supprimee.'
+    }
+
+    Invoke-Test 'Un echec apres Locales restaure automatiquement les trois fichiers' {
+        $root = New-Fixture 'rollback'
+        $registry = New-MockRegistry $false $null $null
+        $before = Get-ContentHashes $root
+        $thrown = $false
+        try { Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryWriter $registry.Writer -RegistryRestorer $registry.Restorer -FailureInjector { param($stage) if($stage -eq 'AfterLocales'){throw 'echec simule'} } | Out-Null }
+        catch { $thrown = $true }
+        Assert-True $thrown 'Echec simule non propage.'
+        $after = Get-ContentHashes $root
+        foreach ($name in $before.Keys) { Assert-True ($after[$name] -eq $before[$name]) "$name non restaure apres echec." }
+    }
+
+    Invoke-Test 'Preference absente avant installation : existence et absence sont restaurees' {
+        $root = New-Fixture 'registry-absent'
+        $registry = New-MockRegistry $false $null $null
+        Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryWriter $registry.Writer -RegistryRestorer $registry.Restorer | Out-Null
+        Assert-True ($registry.Store.Exists -and $registry.Store.Kind -eq 'Binary') 'fr non ecrit en REG_BINARY.'
+        Assert-True (([Text.Encoding]::UTF8.GetString([byte[]]$registry.Store.Value)).Trim([char]0) -eq 'fr') 'Valeur fr incorrecte.'
+        Invoke-GuildrunV21Restore -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryRestorer $registry.Restorer | Out-Null
+        Assert-True (-not $registry.Store.Exists) 'Valeur initialement absente conservee apres restauration.'
+    }
+
+    Invoke-Test 'Preference en avant installation : type et contenu exacts sont restaures' {
+        $root = New-Fixture 'registry-en'
+        $original = [byte[]](101, 110, 0)
+        $registry = New-MockRegistry $true 'Binary' $original
+        Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryWriter $registry.Writer -RegistryRestorer $registry.Restorer | Out-Null
+        Invoke-GuildrunV21Restore -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryRestorer $registry.Restorer | Out-Null
+        Assert-True ($registry.Store.Exists -and $registry.Store.Kind -eq 'Binary') 'Type REG_BINARY en non restaure.'
+        Assert-True (([BitConverter]::ToString([byte[]]$registry.Store.Value)) -eq '65-6E-00') 'Octets en non restaures.'
+    }
+
+    Invoke-Test 'Autre langue avant installation : la valeur utilisateur n est jamais remplacee par en' {
+        $root = New-Fixture 'registry-other'
+        $registry = New-MockRegistry $true 'String' 'de-DE'
+        Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryWriter $registry.Writer -RegistryRestorer $registry.Restorer | Out-Null
+        Invoke-GuildrunV21Restore -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryRestorer $registry.Restorer | Out-Null
+        Assert-True ($registry.Store.Exists -and $registry.Store.Kind -eq 'String' -and $registry.Store.Value -ceq 'de-DE') 'Autre langue ou type non restaure exactement.'
+    }
+
+    Invoke-Test 'Rollback apres erreur : la preference precedente est restauree avec les fichiers' {
+        $root = New-Fixture 'registry-rollback'
+        $registry = New-MockRegistry $true 'Binary' ([byte[]](101, 115, 0))
+        $before = Get-ContentHashes $root
+        $thrown = $false
+        try {
+            Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryWriter $registry.Writer -RegistryRestorer $registry.Restorer -FailureInjector { param($stage) if ($stage -eq 'AfterLocale') { throw 'echec apres registre' } } | Out-Null
+        }
+        catch { $thrown = $true }
+        Assert-True $thrown 'Echec apres ecriture du registre non propage.'
+        Assert-True ($registry.Store.Kind -eq 'Binary' -and ([BitConverter]::ToString([byte[]]$registry.Store.Value)) -eq '65-73-00') 'Preference es non restauree apres rollback.'
+        $after = Get-ContentHashes $root
+        foreach ($name in $before.Keys) { Assert-True ($after[$name] -eq $before[$name]) "$name non restaure avec le registre." }
+    }
+
+    Invoke-Test 'Restauration manuelle exacte : existence, type et contenu reviennent ensemble' {
+        $root = New-Fixture 'registry-manual-exact'
+        $original = [byte[]](112, 116, 45, 66, 82, 0)
+        $registry = New-MockRegistry $true 'Binary' $original
+        Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryWriter $registry.Writer -RegistryRestorer $registry.Restorer | Out-Null
+        Invoke-GuildrunV21Restore -GameRoot $root -PayloadRoot $payloadRoot -RegistryReader $registry.Reader -RegistryRestorer $registry.Restorer | Out-Null
+        $expected = [pscustomobject]@{ Exists = $true; Kind = 'Binary'; Value = $original }
+        $actual = Get-GuildrunLocalePreferenceState -RegistryReader $registry.Reader
+        Assert-True (Test-GuildrunLocalePreferenceEqual $actual $expected) 'Etat complet de la preference non restaure.'
+    }
+
+    Invoke-Test 'Une version inconnue est refusee sans aucune ecriture' {
+        $root = New-Fixture 'unknown'
+        $paths = Get-GuildrunV21Paths $root $payloadRoot $policy
+        $bytes = [IO.File]::ReadAllBytes($paths.Executable); $bytes[0] = $bytes[0] -bxor 1; [IO.File]::WriteAllBytes($paths.Executable,$bytes)
+        $before = Get-ContentHashes $root
+        $thrown = $false
+        try { Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -RegistryWriter { } | Out-Null } catch { $thrown = $true }
+        Assert-True $thrown 'Version inconnue acceptee.'
+        $after = Get-ContentHashes $root
+        foreach ($name in $before.Keys) { Assert-True ($after[$name] -eq $before[$name]) "$name ecrit sur version inconnue." }
+        Assert-True (-not (Test-Path -LiteralPath (Join-Path $root 'Traduction_FR_V2.1'))) 'Dossier de sauvegarde cree sur version inconnue.'
+    }
+
+    Invoke-Test 'Un etat partiellement patche est refuse sans ecriture' {
+        $root = New-Fixture 'partial'
+        $paths = Get-GuildrunV21Paths $root $payloadRoot $policy
+        Copy-Item -LiteralPath $paths.PayloadFrench -Destination $paths.French -Force
+        $before = Get-ContentHashes $root
+        $thrown = $false
+        try { Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -RegistryWriter { } | Out-Null } catch { $thrown = $true }
+        Assert-True $thrown 'Etat partiel accepte.'
+        $after = Get-ContentHashes $root
+        foreach ($name in $before.Keys) { Assert-True ($after[$name] -eq $before[$name]) "$name ecrit sur etat partiel." }
+    }
+}
+finally {
+    $resolvedWork = [IO.Path]::GetFullPath($workRoot)
+    $resolvedTests = [IO.Path]::GetFullPath($PSScriptRoot).TrimEnd('\') + '\'
+    if ($resolvedWork.StartsWith($resolvedTests, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $resolvedWork)) {
+        Remove-Item -LiteralPath $resolvedWork -Recurse -Force
+    }
+}
+
+$results | ForEach-Object { Write-Host $_ }
+Write-Host "RESULTAT : $passed tests reussis, $failed echec(s)."
+if ($failed -gt 0) { exit 1 }

@@ -1,0 +1,44 @@
+# Charges utiles et fichiers officiels du jeu
+payload/
+sources/
+sauvegarde-locale/
+.transactions/
+*.bundle
+*.bin
+*.exe
+
+# Binaires tiers et résultats de compilation
+*.dll
+*.pdb
+*.so
+*.dylib
+*.nupkg
+*.msi
+bin/
+obj/
+artifacts/
+dist/
+release/
+vendor/
+
+# Sauvegardes, données locales et temporaires
+*.backup
+*.bak
+*.tmp
+*.temp
+*.log
+*.zip
+*.7z
+*.rar
+.work-*/
+*.guildrun-fr-v21.new
+*.guildrun-fr-v21.replaced
+
+# IDE et système
+.vs/
+.vscode/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+desktop.ini
