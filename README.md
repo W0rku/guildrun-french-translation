@@ -1,4 +1,4 @@
-# Guildrun — Traduction française V2.1
+# Guildrun — Traduction française V2.1.1
 
 Projet communautaire non officiel ajoutant la traduction française native de Guildrun Demo, sans remplacer ni modifier le bundle anglais officiel.
 
@@ -6,7 +6,7 @@ Projet communautaire non officiel ajoutant la traduction française native de Gu
 
 - Guildrun Demo `0.5.3`
 - Build interne `748`
-- Steam BuildID `24551494`
+- Steam BuildID `24551494` ou `24613101`
 - Windows x64 / Steam
 
 La compatibilité est volontairement stricte : l’installateur vérifie les SHA-256 de `Guildrun.exe`, des bundles English, French et Locales, ainsi que de `catalog.bin`. Une version inconnue ou un état partiellement patché est refusé avant toute écriture.
@@ -48,11 +48,11 @@ Les trois fichiers originaux sont remis depuis la sauvegarde locale et contrôl�
 
 ## Validation
 
-- **19 tests automatisés réussis** ;
+- **22/22 tests automatisés réussis** ;
 - rollback des fichiers et du registre testé ;
 - refus sans écriture des versions inconnues et états partiels testé ;
 - bundle English vérifié intact ;
-- **test manuel en jeu validé**.
+- **test manuel en jeu validé sur Steam BuildID 24613101**.
 
 Les tests automatisés sont dans [`tests/Run-Tests.ps1`](tests/Run-Tests.ps1). Ils nécessitent une copie locale légitime des fichiers officiels et du payload, tous deux volontairement exclus du dépôt.
 

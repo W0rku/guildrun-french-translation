@@ -11,10 +11,12 @@ if ([string]::IsNullOrWhiteSpace($SourcesRoot)) { $SourcesRoot = Join-Path $proj
 if ([string]::IsNullOrWhiteSpace($PayloadRoot)) { $PayloadRoot = Join-Path $projectRoot 'payload' }
 if ([string]::IsNullOrWhiteSpace($AssetsToolsDll)) { $AssetsToolsDll = Join-Path $PSScriptRoot 'vendor\AssetsTools.NET.dll' }
 $officialLocalesHash = 'D4A2D1D0DC9773DFA75E07778EE90EF9F13252DE96DF2E1D72F4A8476E3BBDC7'
-$officialCatalogHash = 'DC16E4280C5FAD3526AEC223B3C41F9A46B519D3EED96E1364EB20DA6A6A5783'
+$officialCatalogLegacyHash = 'DC16E4280C5FAD3526AEC223B3C41F9A46B519D3EED96E1364EB20DA6A6A5783'
+$officialCatalogCurrentHash = '1E436E183F5CC451943F090AD2166B56D592EEBDB75C0D2AD210EEF7FDB26E85'
 $translatedFrenchHash = '67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E'
 $expectedLocalesHash = 'D2885F99C6DB7495ABCF9D9F453AC0225AAFE80304FF29604BAB48ECE812AA9C'
-$expectedCatalogHash = '57A6EA642CE9DE2D89EB8F57FE083C66030834A8519806087D2EFE722A1231CC'
+$expectedCatalogLegacyHash = '57A6EA642CE9DE2D89EB8F57FE083C66030834A8519806087D2EFE722A1231CC'
+$expectedCatalogCurrentHash = '581FE651C8CA4E89BFFC7F789995DA3EFA0EDAA40684F8160E7B2267BA370F4B'
 $frenchPathId = [long]996707670718014713
 
 function Assert-Hash([string] $Path, [string] $Expected, [string] $Label) {
@@ -51,13 +53,16 @@ function Get-BundleInternalCrc([string] $Path) {
 
 if (-not (Test-Path -LiteralPath $PayloadRoot)) { New-Item -ItemType Directory -Path $PayloadRoot | Out-Null }
 $sourceLocales = Join-Path $SourcesRoot 'localization-locales_assets_all.bundle.official'
-$sourceCatalog = Join-Path $SourcesRoot 'catalog.bin.official'
+$sourceCatalogLegacy = Join-Path $SourcesRoot 'catalog.bin.official'
+$sourceCatalogCurrent = Join-Path $SourcesRoot 'catalog-24613101.bin.official'
 $frenchPayload = Join-Path $PayloadRoot 'localization-string-tables-french(fr)_assets_all.bundle'
 $localesOutput = Join-Path $PayloadRoot 'localization-locales_assets_all.bundle'
-$catalogOutput = Join-Path $PayloadRoot 'catalog.bin'
+$catalogOutputLegacy = Join-Path $PayloadRoot 'catalog-24551494.bin'
+$catalogOutputCurrent = Join-Path $PayloadRoot 'catalog.bin'
 
 Assert-Hash $sourceLocales $officialLocalesHash 'Bundle Locales officiel'
-Assert-Hash $sourceCatalog $officialCatalogHash 'Catalog officiel'
+Assert-Hash $sourceCatalogLegacy $officialCatalogLegacyHash 'Catalog officiel BuildID 24551494'
+Assert-Hash $sourceCatalogCurrent $officialCatalogCurrentHash 'Catalog officiel BuildID 24613101'
 Assert-Hash $frenchPayload $translatedFrenchHash 'Bundle French traduit V2'
 Assert-Hash $AssetsToolsDll '8D3CF02A877B0FA0363C7AA5AEDE18B8C1023519632F5E7EAC19AD084C743B34' 'AssetsTools.NET 3.0.5'
 [void][Reflection.Assembly]::LoadFrom([IO.Path]::GetFullPath($AssetsToolsDll))
@@ -116,22 +121,27 @@ finally {
 }
 Assert-Hash $localesOutput $expectedLocalesHash 'Bundle Locales V2.1 reconstruit'
 
-$catalog = [IO.File]::ReadAllBytes([IO.Path]::GetFullPath($sourceCatalog))
-$changes = @(
-    [pscustomobject]@{ Offset = 4723; Expected = [byte[]](0x66,0xD4,0x57,0xE3); Replacement = [BitConverter]::GetBytes((Get-BundleInternalCrc $localesOutput)); Label = 'Locales' },
-    [pscustomobject]@{ Offset = 6143; Expected = [byte[]](0xF9,0x6D,0x07,0xD8); Replacement = [BitConverter]::GetBytes((Get-BundleInternalCrc $frenchPayload)); Label = 'French' }
-)
-foreach ($change in $changes) {
-    for ($index = 0; $index -lt 4; $index++) {
-        if ($catalog[$change.Offset + $index] -ne $change.Expected[$index]) {
-            throw "Octets source inattendus dans catalog.bin pour $($change.Label)."
+function New-PatchedCatalog([string] $Source, [string] $Output, [string] $ExpectedHash, [string] $BuildId) {
+    $catalog = [IO.File]::ReadAllBytes([IO.Path]::GetFullPath($Source))
+    $changes = @(
+        [pscustomobject]@{ Offset = 4723; Expected = [byte[]](0x66,0xD4,0x57,0xE3); Replacement = [BitConverter]::GetBytes((Get-BundleInternalCrc $localesOutput)); Label = 'Locales' },
+        [pscustomobject]@{ Offset = 6143; Expected = [byte[]](0xF9,0x6D,0x07,0xD8); Replacement = [BitConverter]::GetBytes((Get-BundleInternalCrc $frenchPayload)); Label = 'French' }
+    )
+    foreach ($change in $changes) {
+        for ($index = 0; $index -lt 4; $index++) {
+            if ($catalog[$change.Offset + $index] -ne $change.Expected[$index]) {
+                throw "Octets source inattendus dans catalog.bin BuildID $BuildId pour $($change.Label)."
+            }
+            $catalog[$change.Offset + $index] = $change.Replacement[$index]
         }
-        $catalog[$change.Offset + $index] = $change.Replacement[$index]
     }
+    [IO.File]::WriteAllBytes([IO.Path]::GetFullPath($Output), $catalog)
+    Assert-Hash $Output $ExpectedHash "Catalog V2.1 BuildID $BuildId reconstruit"
 }
-[IO.File]::WriteAllBytes([IO.Path]::GetFullPath($catalogOutput), $catalog)
-Assert-Hash $catalogOutput $expectedCatalogHash 'Catalog V2.1 reconstruit'
+
+New-PatchedCatalog $sourceCatalogLegacy $catalogOutputLegacy $expectedCatalogLegacyHash '24551494'
+New-PatchedCatalog $sourceCatalogCurrent $catalogOutputCurrent $expectedCatalogCurrentHash '24613101'
 
 Write-Host 'Payload V2.1 reconstruit et verifie.'
 Write-Host 'French PathID 996707670718014713 : Comment=EDITOR supprime.'
-Write-Host 'catalog.bin : octets 4723-4726 (Locales) et 6143-6146 (French) uniquement.'
+Write-Host 'Catalogues 24551494 et 24613101 : octets 4723-4726 (Locales) et 6143-6146 (French) uniquement.'

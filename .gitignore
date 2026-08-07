@@ -2,6 +2,7 @@
 payload/
 sources/
 sauvegarde-locale/
+sauvegarde-locale-*/
 .transactions/
 *.bundle
 *.bin

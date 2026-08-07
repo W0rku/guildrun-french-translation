@@ -144,15 +144,33 @@ function Get-BundleInternalCrc([string] $BundlePath) {
     [uint32]($crc -bxor [uint32]::MaxValue)
 }
 
+function Get-ByteDiffOffsets([string] $BeforePath, [string] $AfterPath) {
+    $before = [IO.File]::ReadAllBytes($BeforePath)
+    $after = [IO.File]::ReadAllBytes($AfterPath)
+    if ($before.Length -ne $after.Length) { throw 'Les catalogues compares ont des tailles differentes.' }
+    $offsets = @()
+    for ($index = 0; $index -lt $before.Length; $index++) {
+        if ($before[$index] -ne $after[$index]) { $offsets += $index }
+    }
+    $offsets
+}
+
 $dll = Join-Path $projectRoot 'tools\vendor\AssetsTools.NET.dll'
 [void][Reflection.Assembly]::LoadFrom($dll)
 $workRoot = Join-Path $PSScriptRoot ('.work-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $workRoot | Out-Null
 
 try {
-    Invoke-Test 'La build Steam officielle 0.5.3/748 est reconnue par ses SHA-256' {
+    Invoke-Test 'Le Steam BuildID 24613101 officiel est reconnu par ses SHA-256' {
         $paths = Get-GuildrunV21Paths -GameRoot $gameRoot -PayloadRoot $payloadRoot -Policy $policy
-        Assert-True ((Get-GuildrunV21State $paths $policy).Name -eq 'Original') 'Etat Steam non officiel.'
+        $state = Get-GuildrunV21State $paths $policy
+        Assert-True ($state.Name -eq 'Original' -and $state.SteamBuildId -eq '24613101') 'Profil Steam courant non reconnu.'
+    }
+
+    Invoke-Test 'Les profils 24551494 et 24613101 sont tous deux declares strictement' {
+        Assert-True (($policy.Profiles.SteamBuildId -join ',') -eq '24551494,24613101') 'Liste de profils incorrecte.'
+        Assert-True ($policy.Profiles[0].OriginalEnglishHash -eq '8D9798819E3A2DDEE313E0BCB426030B540B7FD3195AA7BB8B24559983606629') 'Hash English historique incorrect.'
+        Assert-True ($policy.Profiles[1].OriginalEnglishHash -eq '30A0230858D555CBF2900CD1B2936CA4A148CFFF8E09677870155D39EB338744') 'Nouveau hash English incorrect.'
     }
 
     $officialRecords = Get-LocaleRecords (Join-Path $sourcesRoot 'localization-locales_assets_all.bundle.official')
@@ -187,13 +205,39 @@ try {
         Assert-True (([Text.Encoding]::UTF8.GetString($capture.Value)).Trim([char]0) -eq 'fr') 'Valeur registre differente de fr.'
     }
 
-    Invoke-Test 'Le catalogue charge les textes French traduits et le bundle Locales patche' {
-        $catalog = [IO.File]::ReadAllBytes((Join-Path $payloadRoot 'catalog.bin'))
+    Invoke-Test 'Les deux catalogues chargent les CRC French et Locales V2.1' {
         $frenchCrc = Get-BundleInternalCrc (Join-Path $payloadRoot $policy.FrenchBundleName)
         $localesCrc = Get-BundleInternalCrc (Join-Path $payloadRoot $policy.LocalesBundleName)
-        Assert-True ([BitConverter]::ToUInt32($catalog, 6143) -eq $frenchCrc) 'CRC French du catalogue incorrect.'
-        Assert-True ([BitConverter]::ToUInt32($catalog, 4723) -eq $localesCrc) 'CRC Locales du catalogue incorrect.'
+        foreach ($profile in $policy.Profiles) {
+            $catalog = [IO.File]::ReadAllBytes((Join-Path $payloadRoot $profile.PayloadCatalogName))
+            Assert-True ([BitConverter]::ToUInt32($catalog, 6143) -eq $frenchCrc) "CRC French incorrect pour $($profile.SteamBuildId)."
+            Assert-True ([BitConverter]::ToUInt32($catalog, 4723) -eq $localesCrc) "CRC Locales incorrect pour $($profile.SteamBuildId)."
+            Assert-True ((Get-GuildrunSha256 (Join-Path $payloadRoot $profile.PayloadCatalogName)) -eq $profile.PatchedCatalogHash) "Hash catalogue incorrect pour $($profile.SteamBuildId)."
+        }
         Assert-True ((Get-GuildrunSha256 (Join-Path $payloadRoot $policy.FrenchBundleName)) -eq $policy.PatchedFrenchHash) 'Bundle French traduit incorrect.'
+    }
+
+    Invoke-Test 'Chaque catalogue officiel ne change qu aux huit octets CRC necessaires' {
+        $legacyDiff = @(Get-ByteDiffOffsets (Join-Path $sourcesRoot 'catalog.bin.official') (Join-Path $payloadRoot 'catalog-24551494.bin'))
+        $currentDiff = @(Get-ByteDiffOffsets (Join-Path $sourcesRoot 'catalog-24613101.bin.official') (Join-Path $payloadRoot 'catalog.bin'))
+        $expected = '4723,4724,4725,4726,6143,6144,6145,6146'
+        Assert-True (($legacyDiff -join ',') -eq $expected) "Diff historique incorrect: $($legacyDiff -join ',')"
+        Assert-True (($currentDiff -join ',') -eq $expected) "Diff courant incorrect: $($currentDiff -join ',')"
+    }
+
+    Invoke-Test 'Le profil historique selectionne son propre catalogue patche' {
+        $root = New-Fixture 'legacy-profile'
+        $paths = Get-GuildrunV21Paths $root $payloadRoot $policy
+        Copy-Item -LiteralPath (Join-Path $sourcesRoot 'catalog.bin.official') -Destination $paths.Catalog -Force
+        $legacyPolicy = $policy | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+        $fixtureEnglish = Get-GuildrunSha256 $paths.English
+        $legacyPolicy.Profiles[0].OriginalEnglishHash = $fixtureEnglish
+        $legacyPolicy.Profiles[1].OriginalEnglishHash = ('0' * 64)
+        $state = Get-GuildrunV21State $paths $legacyPolicy
+        Assert-True ($state.SteamBuildId -eq '24551494') 'Profil historique non selectionne.'
+        $registry = New-MockRegistry $false $null $null
+        Invoke-GuildrunV21Install $root $payloadRoot $legacyPolicy $registry.Reader $registry.Writer $registry.Restorer | Out-Null
+        Assert-True ((Get-GuildrunSha256 $paths.Catalog) -eq $legacyPolicy.Profiles[0].PatchedCatalogHash) 'Catalogue historique non installe.'
     }
 
     $installRoot = New-Fixture 'install-restore'
