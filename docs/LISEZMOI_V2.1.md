@@ -58,6 +58,6 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 5. Ouvrir Settings > Language : `French (fr)` doit apparaître et `Japanese (ja)` doit rester absent.
 6. Sélectionner `French (fr)` si nécessaire, revenir au menu puis ouvrir plusieurs écrans de jeu pour confirmer le chargement des textes français.
 7. Fermer et relancer le jeu : le Locale français doit rester sélectionné.
-8. Quitter le jeu, utiliser **Restaurer la sauvegarde**, puis vérifier avec Steam si l'on souhaite confirmer le retour exact aux fichiers officiels.
+8. Quitter le jeu, utiliser **Restaurer** pour remettre l’état précédent, puis vérifier avec Steam si l'on souhaite confirmer le retour exact aux fichiers officiels.
 
 La V2.1.1 est distribuée uniquement comme exécutable joint à la Pre-release privée `v2.1.1-rc1` ; aucun exécutable ni fichier du jeu n'est suivi par Git.

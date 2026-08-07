@@ -203,16 +203,19 @@ namespace GuildrunFrenchInstallerV21
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            Rectangle circle = new Rectangle(1, 1, Width - 3, Height - 3);
+            float diameter = Math.Max(4F, Math.Min(Width, Height) - 3F);
+            float left = (Width - diameter) / 2F;
+            float top = (Height - diameter) / 2F;
+            RectangleF circle = new RectangleF(left, top, diameter, diameter);
             using (SolidBrush fill = new SolidBrush(Theme.Accent)) e.Graphics.FillEllipse(fill, circle);
-            using (Pen check = new Pen(Color.FromArgb(8, 45, 48), 2F))
+            using (Pen check = new Pen(Color.FromArgb(8, 45, 48), Math.Max(1.8F, diameter * 0.075F)))
             {
                 check.StartCap = LineCap.Round;
                 check.EndCap = LineCap.Round;
                 e.Graphics.DrawLines(check, new[] {
-                    new Point(Width / 3, Height / 2),
-                    new Point(Width / 2 - 1, Height * 2 / 3),
-                    new Point(Width * 3 / 4, Height / 3)
+                    new PointF(left + diameter * 0.29F, top + diameter * 0.51F),
+                    new PointF(left + diameter * 0.46F, top + diameter * 0.67F),
+                    new PointF(left + diameter * 0.74F, top + diameter * 0.34F)
                 });
             }
         }
@@ -230,14 +233,21 @@ namespace GuildrunFrenchInstallerV21
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            float cx = Width / 2F;
+            float cy = Height / 2F;
+            float scale = Math.Min(Width, Height) / 34F;
             using (GraphicsPath folder = new GraphicsPath())
             {
                 folder.AddLines(new[] {
-                    new Point(4, 10), new Point(11, 10), new Point(14, 13),
-                    new Point(27, 13), new Point(27, 27), new Point(4, 27)
+                    new PointF(cx - 12F * scale, cy - 8F * scale),
+                    new PointF(cx - 5F * scale, cy - 8F * scale),
+                    new PointF(cx - 2F * scale, cy - 5F * scale),
+                    new PointF(cx + 12F * scale, cy - 5F * scale),
+                    new PointF(cx + 12F * scale, cy + 9F * scale),
+                    new PointF(cx - 12F * scale, cy + 9F * scale)
                 });
                 folder.CloseFigure();
-                using (Pen pen = new Pen(Theme.Muted, 1.8F) { LineJoin = LineJoin.Round })
+                using (Pen pen = new Pen(Theme.Muted, Math.Max(1.5F, 1.8F * scale)) { LineJoin = LineJoin.Round })
                     e.Graphics.DrawPath(pen, folder);
             }
         }
@@ -268,7 +278,8 @@ namespace GuildrunFrenchInstallerV21
                 g.DrawPath(border, path);
             }
 
-            using (Pen pen = new Pen(Theme.Accent, 2F))
+            float scale = Math.Min(Width, Height) / 46F;
+            using (Pen pen = new Pen(Theme.Accent, Math.Max(1.6F, 2F * scale)))
             {
                 pen.StartCap = LineCap.Round;
                 pen.EndCap = LineCap.Round;
@@ -281,31 +292,60 @@ namespace GuildrunFrenchInstallerV21
 
         private void DrawGlobe(Graphics g, Pen pen)
         {
-            Rectangle r = new Rectangle(12, 11, 23, 24);
+            float scale = Math.Min(Width, Height) / 46F;
+            float cx = Width / 2F;
+            float cy = Height / 2F;
+            RectangleF r = new RectangleF(cx - 11.5F * scale, cy - 12F * scale, 23F * scale, 24F * scale);
             g.DrawEllipse(pen, r);
-            g.DrawArc(pen, new Rectangle(18, 11, 11, 24), 90, 180);
-            g.DrawArc(pen, new Rectangle(18, 11, 11, 24), 270, 180);
-            g.DrawLine(pen, 12, 23, 35, 23);
-            g.DrawArc(pen, new Rectangle(12, 17, 23, 12), 180, 180);
+            RectangleF meridian = new RectangleF(cx - 5.5F * scale, cy - 12F * scale, 11F * scale, 24F * scale);
+            g.DrawArc(pen, meridian, 90, 180);
+            g.DrawArc(pen, meridian, 270, 180);
+            g.DrawLine(pen, cx - 11.5F * scale, cy, cx + 11.5F * scale, cy);
+            g.DrawArc(pen, new RectangleF(cx - 11.5F * scale, cy - 6F * scale, 23F * scale, 12F * scale), 180, 180);
         }
 
         private void DrawShield(Graphics g, Pen pen, bool small)
         {
-            Point[] points = { new Point(23, 9), new Point(34, 14), new Point(33, 28), new Point(23, 36), new Point(13, 28), new Point(12, 14) };
+            float scale = Math.Min(Width, Height) / 46F;
+            float cx = Width / 2F;
+            float cy = Height / 2F;
+            PointF[] points = {
+                new PointF(cx, cy - 13.5F * scale), new PointF(cx + 11F * scale, cy - 8.5F * scale),
+                new PointF(cx + 10F * scale, cy + 5.5F * scale), new PointF(cx, cy + 13.5F * scale),
+                new PointF(cx - 10F * scale, cy + 5.5F * scale), new PointF(cx - 11F * scale, cy - 8.5F * scale)
+            };
             g.DrawPolygon(pen, points);
-            g.DrawLines(pen, new[] { new Point(18, 23), new Point(22, 27), new Point(29, 19) });
+            g.DrawLines(pen, new[] {
+                new PointF(cx - 5F * scale, cy + 0.5F * scale),
+                new PointF(cx - 1F * scale, cy + 4.5F * scale),
+                new PointF(cx + 6F * scale, cy - 3.5F * scale)
+            });
         }
 
         private void DrawRestore(Graphics g, Pen pen)
         {
-            g.DrawArc(pen, new Rectangle(12, 11, 24, 24), -70, 285);
-            g.DrawLines(pen, new[] { new Point(11, 15), new Point(11, 23), new Point(18, 23) });
+            float scale = Math.Min(Width, Height) / 46F;
+            float cx = Width / 2F;
+            float cy = Height / 2F;
+            g.DrawArc(pen, new RectangleF(cx - 12F * scale, cy - 12F * scale, 24F * scale, 24F * scale), -70, 285);
+            g.DrawLines(pen, new[] {
+                new PointF(cx - 12.5F * scale, cy - 8F * scale),
+                new PointF(cx - 12.5F * scale, cy),
+                new PointF(cx - 5.5F * scale, cy)
+            });
         }
 
         private void DrawCheck(Graphics g, Pen pen)
         {
-            g.DrawEllipse(pen, new Rectangle(12, 12, 22, 22));
-            g.DrawLines(pen, new[] { new Point(17, 23), new Point(21, 27), new Point(29, 18) });
+            float scale = Math.Min(Width, Height) / 46F;
+            float cx = Width / 2F;
+            float cy = Height / 2F;
+            g.DrawEllipse(pen, new RectangleF(cx - 11F * scale, cy - 11F * scale, 22F * scale, 22F * scale));
+            g.DrawLines(pen, new[] {
+                new PointF(cx - 6F * scale, cy),
+                new PointF(cx - 2F * scale, cy + 4F * scale),
+                new PointF(cx + 6F * scale, cy - 5F * scale)
+            });
         }
     }
 
@@ -387,6 +427,7 @@ namespace GuildrunFrenchInstallerV21
             BackColor = Theme.WindowTop;
             ForeColor = Theme.Text;
             Font = new Font("Segoe UI", 10F);
+            AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             DoubleBuffered = true;
             KeyPreview = true;
@@ -416,7 +457,7 @@ namespace GuildrunFrenchInstallerV21
 
             AddFeature(48, 370, FeatureIconKind.Globe, "100% local", "Aucun fichier envoyé. Tout reste sur votre PC.");
             AddFeature(48, 452, FeatureIconKind.Shield, "Sûr & vérifié", "3 918 textes contrôlés et validés.");
-            AddFeature(48, 534, FeatureIconKind.Restore, "Réversible", "Restauration de l’anglais en un clic.");
+            AddFeature(48, 534, FeatureIconKind.Restore, "Réversible", "Retire la traduction et restaure l’état précédent.");
 
             actionPanel = new RoundedPanel {
                 Left = 500, Top = 318, Width = 630, Height = 285,
@@ -456,7 +497,7 @@ namespace GuildrunFrenchInstallerV21
             };
             restoreButton = new RoundedButton {
                 Left = 28, Top = 211, Width = 574, Height = 55,
-                Text = "↶    Restaurer l’anglais", Font = new Font("Segoe UI", 12F), Radius = 12,
+                Text = "Restaurer", Font = new Font("Segoe UI", 12F), Radius = 12,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             installButton.Click += delegate { Run(false); };
@@ -468,12 +509,12 @@ namespace GuildrunFrenchInstallerV21
             footer.Top = ClientSize.Height - footer.Height - 1;
             Panel footerLine = new Panel { Left = 0, Top = 0, Height = 1, BackColor = Theme.BorderSoft, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             footerLine.Width = footer.Width;
-            IconTile footerShield = new IconTile { Left = 38, Top = 22, Width = 40, Height = 40, Kind = FeatureIconKind.Shield };
-            footerStatus = CreateLabel("Version vérifiée   •   Installer français", 88, 29, 390, 28, Theme.Muted, new Font("Segoe UI", 10.5F));
+            IconTile footerShield = new IconTile { Left = 38, Top = 23, Width = 40, Height = 40, Kind = FeatureIconKind.Shield };
+            footerStatus = CreateLabel("Version vérifiée   •   Installer français", 88, 29, 350, 28, Theme.Muted, new Font("Segoe UI", 10.5F));
             footerStatus.UseMnemonic = false;
 
             detailsButton = new Button {
-                Left = 475, Top = 25, Width = 90, Height = 32, Text = "Voir le journal",
+                Left = 442, Top = 25, Width = 105, Height = 32, Text = "Voir le journal",
                 FlatStyle = FlatStyle.Flat, BackColor = Color.Transparent, ForeColor = Theme.Accent,
                 Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand, Visible = false
             };
@@ -569,9 +610,9 @@ namespace GuildrunFrenchInstallerV21
 
         private void AddFeature(int left, int top, FeatureIconKind kind, string title, string description)
         {
-            IconTile icon = new IconTile { Left = left, Top = top, Kind = kind };
+            IconTile icon = new IconTile { Left = left, Top = top + 4, Kind = kind };
             Label titleLabel = CreateLabel(title, left + 66, top + 1, 285, 24, Theme.Text, new Font("Segoe UI Semibold", 10.5F));
-            Label descriptionLabel = CreateLabel(description, left + 66, top + 28, 340, 25, Theme.Muted, new Font("Segoe UI", 9.5F));
+            Label descriptionLabel = CreateLabel(description, left + 66, top + 28, 315, 25, Theme.Muted, new Font("Segoe UI", 9.5F));
             Controls.AddRange(new Control[] { icon, titleLabel, descriptionLabel });
         }
 
@@ -652,7 +693,7 @@ namespace GuildrunFrenchInstallerV21
             UseWaitCursor = true;
             log.Clear();
             footerStatus.ForeColor = Theme.Accent;
-            footerStatus.Text = restore ? "Restauration de l’anglais…" : "Installation du français…";
+            footerStatus.Text = restore ? "Restauration de l’état précédent…" : "Installation du français…";
             Refresh();
 
             try
@@ -660,10 +701,10 @@ namespace GuildrunFrenchInstallerV21
                 string output = ExecutePowerShell(root, restore);
                 log.Text = output;
                 detailsButton.Visible = !String.IsNullOrWhiteSpace(output);
-                footerStatus.Text = restore ? "Anglais restauré et vérifié" : "Français installé et vérifié";
+                footerStatus.Text = restore ? "État précédent restauré et vérifié" : "Français installé et vérifié";
                 footerStatus.ForeColor = Theme.Accent;
                 MessageBox.Show(this,
-                    restore ? "Fichiers et préférence Unity restaurés et vérifiés." : "Traduction française installée et langue sélectionnée.",
+                    restore ? "L’état précédent du jeu a été restauré et les modifications de la traduction ont été retirées." : "Traduction française installée et langue sélectionnée.",
                     "Opération terminée", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)

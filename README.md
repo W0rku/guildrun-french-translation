@@ -14,10 +14,10 @@ L’installation est contrôlée, sauvegarde les fichiers concernés et peut res
 
 Au prochain lancement, choisir **French (fr)** dans les paramètres de langue si nécessaire.
 
-## Revenir en anglais ou restaurer
+## Revenir en anglais ou restaurer le jeu
 
-- Pour jouer en anglais sans désinstaller la traduction, sélectionner simplement **English** dans le menu des langues.
-- Pour retirer complètement le patch, fermer le jeu, relancer le même installateur et choisir **Restaurer la sauvegarde**. Les fichiers et la préférence de langue antérieurs sont remis exactement dans leur état initial.
+- **English reste disponible dans le jeu** : pour jouer en anglais sans retirer la traduction, sélectionner simplement **English** dans le menu des langues.
+- Pour retirer les modifications de la traduction, fermer le jeu, relancer le même installateur et choisir **Restaurer**. Cette fonction remet les fichiers et la préférence de langue exactement dans leur état précédent.
 
 ## Compatibilité
 
@@ -35,7 +35,7 @@ La version de référence est disponible dans les [Releases GitHub](https://gith
 **Guildrun_Demo_FR_Installer_V2.1.1.exe**
 
 ```text
-SHA-256  BC660DBB3C40202A1FDB9A765035F7854FAAA5F18648B83E771D669AE630D9A5
+SHA-256  79F52E55D7CBEE5F847661F64FA84C69C7B0989E44606484CB30DDA6C9A10667
 ```
 
 La V2.1.1 a réussi **22/22 tests automatisés** et a été validée manuellement sur Steam BuildID `24613101`.
