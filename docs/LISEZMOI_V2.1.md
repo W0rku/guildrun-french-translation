@@ -60,4 +60,4 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 7. Fermer et relancer le jeu : le Locale français doit rester sélectionné.
 8. Quitter le jeu, utiliser **Restaurer** pour remettre l’état précédent, puis vérifier avec Steam si l'on souhaite confirmer le retour exact aux fichiers officiels.
 
-La V2.1.1 est distribuée uniquement comme exécutable joint à la Pre-release privée `v2.1.1-rc1` ; aucun exécutable ni fichier du jeu n'est suivi par Git.
+La V2.1.1 est distribuée uniquement comme exécutable joint à la Release stable `v2.1.1` ; aucun exécutable ni fichier du jeu n'est suivi par Git.

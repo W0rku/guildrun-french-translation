@@ -30,7 +30,7 @@ Une mise à jour de Guildrun peut modifier les fichiers contrôlés par l’inst
 
 ## Téléchargement et vérification
 
-La version de référence est disponible dans les [Releases GitHub](https://github.com/W0rku/guildrun-french-translation/releases/tag/v2.1.1-rc1).
+La version stable est disponible dans les [Releases GitHub](https://github.com/W0rku/guildrun-french-translation/releases/tag/v2.1.1).
 
 **Guildrun_Demo_FR_Installer_V2.1.1.exe**
 
