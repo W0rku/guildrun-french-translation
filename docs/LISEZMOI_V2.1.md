@@ -1,6 +1,8 @@
-# Guildrun Demo — Traduction française V2.1.1
+# Guildrun Demo — Traduction française V2.1.2
 
-Cette révision cible **Guildrun Demo 0.5.3, build 748** et reconnaît les Steam BuildID `24551494` et `24613101`. Elle utilise le véritable Locale Unity `French (fr)` et ne remplace jamais le bundle anglais.
+Cette révision cible **Guildrun Demo 0.5.3, build 748** et reconnaît deux profils Steam : BuildID `24551494` et BuildID `24613101`. Elle utilise le véritable Locale Unity `French (fr)` et ne remplace jamais le bundle anglais.
+
+La V2.1.2 corrige dix entrées françaises : trois libellés « Choisissez… » affichant une syntaxe de formatage littérale, un sélecteur Smart String `plural`, cinq descriptions dont les arguments ou balises divergeaient de l’anglais, et une clé absente des tables françaises. Les tables English et French contiennent désormais chacune 3 919 clés.
 
 ## Changement du Locale
 
@@ -22,20 +24,22 @@ Le bundle anglais est contrôlé avant et après l'opération, mais n'est jamais
 
 1. Vérification de `Guildrun.exe`, des trois fichiers officiels et du bundle anglais par SHA-256.
 2. Vérification des trois fichiers embarqués dans le payload.
-3. Refus immédiat d'une version inconnue ou d'un mélange officiel/patché, sans création de sauvegarde.
+3. Refus immédiat d'une version inconnue ou d'un mélange officiel/patché, tout en reconnaissant une V2.1.1 complète comme source de mise à niveau.
 4. Capture de l'existence, du type et du contenu exact de `selected-locale_h3890535593`.
-5. Copie exacte des trois originaux dans une sauvegarde locale propre au profil, avec manifeste SHA-256 et état antérieur de la préférence Unity.
+5. Copie exacte des trois originaux dans la sauvegarde locale propre au profil (`sauvegarde-locale` ou `sauvegarde-locale-24613101`), avec manifeste SHA-256 et état antérieur de la préférence Unity.
 6. Création d'une sauvegarde transactionnelle temporaire des trois fichiers et de la préférence.
 7. Remplacement atomique de French, Locales, puis `catalog.bin`, avec contrôle après chaque écriture.
-8. Contrôle final du triplet V2.1 et du bundle anglais.
+8. Contrôle final du triplet V2.1.2 et du bundle anglais.
 9. Écriture de `fr\0` en `REG_BINARY` dans `HKCU\Software\Leyline\Guildrun`, valeur `selected-locale_h3890535593`.
 10. Si une étape échoue, restauration automatique des trois fichiers et de la préférence précédente, puis vérification.
 
 Lors d'une restauration manuelle, l'installateur remet la valeur, son type et son contenu précédents. Si la valeur n'existait pas avant l'installation, elle est supprimée. Aucune restauration ne force arbitrairement `en`.
 
+Lors d’une mise à niveau depuis V2.1.1, la sauvegarde locale originale n’est jamais réécrite. Un échec remet exactement le triplet V2.1.1 et sa préférence courante ; la restauration manuelle continue de remettre l’état officiel précédant la première installation.
+
 ## Utilisation
 
-- Interface graphique : exécuter `Guildrun_Demo_FR_Installer_V2.1.1.exe` depuis la Release privée en administrateur.
+- Interface graphique : compiler puis exécuter localement `installer/Guildrun_Demo_FR_Installer_V2.1.2.exe` en administrateur.
 - Script : `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\installer_traduction.ps1`
 - Restauration : `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restaurer_sauvegarde.ps1`
 
@@ -44,7 +48,7 @@ Lors d'une restauration manuelle, l'installateur remet la valeur, son type et so
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\reconstruire_payload_v21.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-Tests.ps1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Installeur\compiler_installeur.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\installer\compiler_installeur.ps1
 ```
 
 La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspecter le bundle Unity. Elle n'est pas embarquée dans l'installateur.
@@ -52,7 +56,7 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 ## Test manuel dans le jeu
 
 1. Dans Steam, vérifier les fichiers du jeu et confirmer que la build affichée est 0.5.3 build 748.
-2. Lancer l'installateur V2.1.1 et sélectionner le dossier contenant `Guildrun.exe`.
+2. Lancer l'installateur V2.1.2 et sélectionner le dossier contenant `Guildrun.exe`.
 3. Cliquer sur **Installer la V2.1** et attendre le message de réussite.
 4. Lancer le jeu normalement, sans `-language=en`.
 5. Ouvrir Settings > Language : `French (fr)` doit apparaître et `Japanese (ja)` doit rester absent.
@@ -60,4 +64,4 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 7. Fermer et relancer le jeu : le Locale français doit rester sélectionné.
 8. Quitter le jeu, utiliser **Restaurer** pour remettre l’état précédent, puis vérifier avec Steam si l'on souhaite confirmer le retour exact aux fichiers officiels.
 
-La V2.1.1 est distribuée uniquement comme exécutable joint à la Release stable `v2.1.1` ; aucun exécutable ni fichier du jeu n'est suivi par Git.
+La compilation V2.1.2 locale a réussi 28/28 tests automatisés. Elle doit encore être validée manuellement dans le jeu avant toute nouvelle Release ; la Release stable V2.1.1 reste inchangée.

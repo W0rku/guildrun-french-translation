@@ -6,6 +6,14 @@ Ce projet ajoute **Français** comme une véritable langue dans le menu du jeu. 
 
 L’installation est contrôlée, sauvegarde les fichiers concernés et peut restaurer exactement leur état précédent.
 
+## Correctifs V2.1.2 en préparation
+
+L’audit du 11 août 2026 confirme que Steam utilise toujours le BuildID `24613101` : les fichiers du jeu n’ont pas changé depuis la dernière version compatible. Le problème visible sur l’écran de sélection des héros venait de la table French V2.1.1, qui affichait littéralement une expression de formatage.
+
+Les sources V2.1.2 corrigent dix entrées ciblées, ajoutent l’unique clé French manquante et alignent les arguments, balises et métadonnées Smart String sur English. L’audit porte désormais sur **3 919 clés** et la suite passe **28/28 tests automatisés**. La mise à niveau transactionnelle depuis une V2.1.1 complète est également couverte.
+
+Cette compilation doit encore être validée manuellement en jeu. En attendant, la Release stable et son installateur V2.1.1 restent inchangés. Voir le [rapport d’audit](docs/AUDIT_TRADUCTION_V2.1.2.md).
+
 ## Installation
 
 1. Télécharger `Guildrun_Demo_FR_Installer_V2.1.1.exe` depuis la page [Releases](https://github.com/W0rku/guildrun-french-translation/releases).
@@ -38,7 +46,7 @@ La version stable est disponible dans les [Releases GitHub](https://github.com/W
 SHA-256  79F52E55D7CBEE5F847661F64FA84C69C7B0989E44606484CB30DDA6C9A10667
 ```
 
-La V2.1.1 a réussi **22/22 tests automatisés** et a été validée manuellement sur Steam BuildID `24613101`.
+La Release V2.1.1 a réussi **22/22 tests automatisés** et a été validée manuellement sur Steam BuildID `24613101`. Les sources V2.1.2 en préparation passent **28/28 tests automatisés** mais ne remplacent pas encore cette Release.
 
 ## Code source et fichiers du jeu
 

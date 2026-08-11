@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 $installerRoot = $PSScriptRoot
 $v21Root = Split-Path -Parent $installerRoot
 $csc = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.1.exe'
+$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.2.exe'
 $source = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.cs'
 $manifest = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.manifest'
 $common = Join-Path $v21Root 'scripts\GuildrunV21.Common.ps1'
@@ -20,10 +20,10 @@ foreach ($required in @($csc, $source, $manifest, $common, $install, $restore, $
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Fichier requis introuvable : $required" }
 }
 $expected = @{
-    $french = '67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E'
+    $french = '7C8D467B719EEEE955C0226248EC90004277842B5017436607E7A01EAE388305'
     $locales = 'D2885F99C6DB7495ABCF9D9F453AC0225AAFE80304FF29604BAB48ECE812AA9C'
-    $catalogCurrent = '581FE651C8CA4E89BFFC7F789995DA3EFA0EDAA40684F8160E7B2267BA370F4B'
-    $catalogLegacy = '57A6EA642CE9DE2D89EB8F57FE083C66030834A8519806087D2EFE722A1231CC'
+    $catalogCurrent = '7B78213D5C73446074C59F223BAE05199D7C65ABB6F7CA77484AA7BE33657A71'
+    $catalogLegacy = '44BC589D21336E54170B5F39702BFAE8E07B971AB573B1459BD09008D6D97232'
 }
 foreach ($entry in $expected.GetEnumerator()) {
     if ((Get-FileHash -Algorithm SHA256 -LiteralPath $entry.Key).Hash -ne $entry.Value) { throw "Charge utile V2.1 invalide : $($entry.Key)" }
@@ -44,5 +44,5 @@ $arguments = @(
 )
 & $csc $arguments
 if ($LASTEXITCODE -ne 0) { throw "Compilation echouee avec le code $LASTEXITCODE." }
-Write-Host "Installateur V2.1.1 multi-BuildID compile : $output"
+Write-Host "Installateur V2.1.2 multi-BuildID compile : $output"
 Write-Host "SHA-256 : $((Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash)"

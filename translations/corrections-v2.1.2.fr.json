@@ -1,0 +1,58 @@
+{
+  "version": "2.1.2",
+  "baselineSha256": "67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E",
+  "corrections": [
+    {
+      "table": "UI",
+      "id": "4757517696221205",
+      "text": "Choisissez un héros"
+    },
+    {
+      "table": "UI",
+      "id": "5855615528976384",
+      "text": "Choisissez votre récompense"
+    },
+    {
+      "table": "UI",
+      "id": "5855615566725120",
+      "text": "Choisissez un objet"
+    },
+    {
+      "table": "UI",
+      "id": "80337992714018816",
+      "text": "{0:plural:1 jour|{} jours}"
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540996943951",
+      "text": "[Frappe résolue]<bold> frappe {0} seconde plus rapidement et affecte une zone plus grande.\n\nLors d’un [lancement]<bold> après [Temporisation ({3}),]<stall>, gagnez [{1}+{2}_Defense]<statcalc_shield> des [Boucliers]<shield> [persistants]<lasting>."
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540996943953",
+      "text": "Lors d’un [coup critique]<crit> pendant [Ruée ({0}),]<rush>, gagnez de façon permanente [{1}+{2}_Rank]<statcalc_attack> [Attaque]<attack> et [{5}+{6}_Attack]<statcalc_shield> des [Boucliers]<shield> [persistants]<lasting>.\n\nChaque fois qu’un [Guerrier]<warrior> réussit un [coup critique,]<crit> réduisez la [Défense]<defense> de sa cible de [{3}+{4}_Rank]<statcalc_defense>. [Renfort.]<backup>"
+    },
+    {
+      "table": "Relics",
+      "id": "11913064820228119",
+      "text": "Chaque fois qu’un [Duelliste]<duelist> effectue une attaque automatique, il gagne [{0} Vitesse d’attaque]<attackspeed> par type de [Malus]<debuff> présent sur sa cible."
+    },
+    {
+      "table": "Items",
+      "id": "21745534101078102",
+      "text": "Au [début du combat]<bold> et [toutes les {0} secondes,]<bold> gagnez [Furtivité]<stealth> pendant {1} secondes."
+    },
+    {
+      "table": "Relics",
+      "id": "21745596575236142",
+      "text": "Après [Temporisation ({0}, {1} et {2}),]<stall>, doublez la quantité de [Poison]<poison> présente sur tous les ennemis."
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "83960963810713600",
+      "text": "[Attaque]<attack> gagnée : [{0}]<datatracking>",
+      "add": true,
+      "smartTemplateId": "9816540992749582"
+    }
+  ]
+}

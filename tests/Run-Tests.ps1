@@ -34,9 +34,9 @@ function New-Fixture([string] $Name) {
     New-Item -ItemType Directory -Path $bundleRoot -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun.exe') -Destination $root
     Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun_Data\StreamingAssets\aa\StandaloneWindows64\localization-string-tables-english(en)_assets_all.bundle') -Destination $bundleRoot
-    Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun_Data\StreamingAssets\aa\StandaloneWindows64\localization-string-tables-french(fr)_assets_all.bundle') -Destination $bundleRoot
-    Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun_Data\StreamingAssets\aa\StandaloneWindows64\localization-locales_assets_all.bundle') -Destination $bundleRoot
-    Copy-Item -LiteralPath (Join-Path $gameRoot 'Guildrun_Data\StreamingAssets\aa\catalog.bin') -Destination (Split-Path -Parent $bundleRoot)
+    Copy-Item -LiteralPath (Join-Path $sourcesRoot 'localization-string-tables-french(fr)_assets_all.bundle.official') -Destination (Join-Path $bundleRoot $policy.FrenchBundleName)
+    Copy-Item -LiteralPath (Join-Path $sourcesRoot 'localization-locales_assets_all.bundle.official') -Destination (Join-Path $bundleRoot $policy.LocalesBundleName)
+    Copy-Item -LiteralPath (Join-Path $sourcesRoot 'catalog-24613101.bin.official') -Destination (Join-Path (Split-Path -Parent $bundleRoot) 'catalog.bin')
     $root
 }
 
@@ -144,6 +144,36 @@ function Get-BundleInternalCrc([string] $BundlePath) {
     [uint32]($crc -bxor [uint32]::MaxValue)
 }
 
+function New-PreviousPayload {
+    $root = Join-Path $workRoot 'previous-payload'
+    New-Item -ItemType Directory -Path $root -Force | Out-Null
+    $french = Join-Path $root $policy.FrenchBundleName
+    $locales = Join-Path $root $policy.LocalesBundleName
+    Copy-Item -LiteralPath (Join-Path $sourcesRoot 'localization-string-tables-french(fr)_assets_all.v211.bundle') -Destination $french
+    Copy-Item -LiteralPath (Join-Path $payloadRoot $policy.LocalesBundleName) -Destination $locales
+    $frenchCrc = Get-BundleInternalCrc $french
+    $localesCrc = Get-BundleInternalCrc $locales
+    foreach ($profile in $policy.Profiles) {
+        $sourceName = if ($profile.SteamBuildId -eq '24551494') { 'catalog.bin.official' } else { 'catalog-24613101.bin.official' }
+        $catalog = [IO.File]::ReadAllBytes((Join-Path $sourcesRoot $sourceName))
+        [BitConverter]::GetBytes([uint32]$localesCrc).CopyTo($catalog, 4723)
+        [BitConverter]::GetBytes([uint32]$frenchCrc).CopyTo($catalog, 6143)
+        $catalogPath = Join-Path $root $profile.PayloadCatalogName
+        [IO.File]::WriteAllBytes($catalogPath, $catalog)
+        Assert-True ((Get-GuildrunSha256 $catalogPath) -eq $profile.PreviousPatchedCatalogHash) "Catalogue V2.1.1 simule incorrect pour $($profile.SteamBuildId)."
+    }
+    Assert-True ((Get-GuildrunSha256 $french) -eq $policy.PreviousPatchedFrenchHash) 'Bundle French V2.1.1 simule incorrect.'
+    $root
+}
+
+function Get-PreviousPolicy {
+    $previous = $policy | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+    $previous.PatchedFrenchHash = $previous.PreviousPatchedFrenchHash
+    foreach ($profile in $previous.Profiles) { $profile.PatchedCatalogHash = $profile.PreviousPatchedCatalogHash }
+    $previous.PatchedCatalogHash = $previous.Profiles[1].PatchedCatalogHash
+    $previous
+}
+
 function Get-ByteDiffOffsets([string] $BeforePath, [string] $AfterPath) {
     $before = [IO.File]::ReadAllBytes($BeforePath)
     $after = [IO.File]::ReadAllBytes($AfterPath)
@@ -159,10 +189,13 @@ $dll = Join-Path $projectRoot 'tools\vendor\AssetsTools.NET.dll'
 [void][Reflection.Assembly]::LoadFrom($dll)
 $workRoot = Join-Path $PSScriptRoot ('.work-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $workRoot | Out-Null
+$previousPayloadRoot = New-PreviousPayload
+$previousPolicy = Get-PreviousPolicy
 
 try {
     Invoke-Test 'Le Steam BuildID 24613101 officiel est reconnu par ses SHA-256' {
-        $paths = Get-GuildrunV21Paths -GameRoot $gameRoot -PayloadRoot $payloadRoot -Policy $policy
+        $root = New-Fixture 'official-current-profile'
+        $paths = Get-GuildrunV21Paths -GameRoot $root -PayloadRoot $payloadRoot -Policy $policy
         $state = Get-GuildrunV21State $paths $policy
         Assert-True ($state.Name -eq 'Original' -and $state.SteamBuildId -eq '24613101') 'Profil Steam courant non reconnu.'
     }
@@ -171,6 +204,14 @@ try {
         Assert-True (($policy.Profiles.SteamBuildId -join ',') -eq '24551494,24613101') 'Liste de profils incorrecte.'
         Assert-True ($policy.Profiles[0].OriginalEnglishHash -eq '8D9798819E3A2DDEE313E0BCB426030B540B7FD3195AA7BB8B24559983606629') 'Hash English historique incorrect.'
         Assert-True ($policy.Profiles[1].OriginalEnglishHash -eq '30A0230858D555CBF2900CD1B2936CA4A148CFFF8E09677870155D39EB338744') 'Nouveau hash English incorrect.'
+        Assert-True ($policy.Profiles[0].PreviousPatchedCatalogHash -eq '57A6EA642CE9DE2D89EB8F57FE083C66030834A8519806087D2EFE722A1231CC') 'Catalogue V2.1.1 historique non declare.'
+        Assert-True ($policy.Profiles[1].PreviousPatchedCatalogHash -eq '581FE651C8CA4E89BFFC7F789995DA3EFA0EDAA40684F8160E7B2267BA370F4B') 'Catalogue V2.1.1 courant non declare.'
+    }
+
+    Invoke-Test 'L audit des 3919 cles French ne trouve plus de cle, format ou balise divergente' {
+        $root = New-Fixture 'translation-audit'
+        $paths = Get-GuildrunV21Paths $root $payloadRoot $policy
+        & (Join-Path $projectRoot 'tools\auditer_traduction_v212.ps1') -EnglishBundle $paths.English | Out-Null
     }
 
     $officialRecords = Get-LocaleRecords (Join-Path $sourcesRoot 'localization-locales_assets_all.bundle.official')
@@ -223,6 +264,27 @@ try {
         $expected = '4723,4724,4725,4726,6143,6144,6145,6146'
         Assert-True (($legacyDiff -join ',') -eq $expected) "Diff historique incorrect: $($legacyDiff -join ',')"
         Assert-True (($currentDiff -join ',') -eq $expected) "Diff courant incorrect: $($currentDiff -join ',')"
+    }
+
+    Invoke-Test 'L installateur V2.1.2 embarque exactement les quatre payloads verifies' {
+        $installerDirectory = if (Test-Path -LiteralPath (Join-Path $projectRoot 'Installeur')) { 'Installeur' } else { 'installer' }
+        $installerPath = Join-Path $projectRoot (Join-Path $installerDirectory 'Guildrun_Demo_FR_Installer_V2.1.2.exe')
+        Assert-True (Test-Path -LiteralPath $installerPath -PathType Leaf) 'Installateur V2.1.2 non compile.'
+        $assembly = [Reflection.Assembly]::LoadFile([IO.Path]::GetFullPath($installerPath))
+        $expectedResources = [ordered]@{
+            'GuildrunFRV21.French' = $policy.PatchedFrenchHash
+            'GuildrunFRV21.Locales' = $policy.PatchedLocalesHash
+            'GuildrunFRV21.CatalogCurrent' = $policy.Profiles[1].PatchedCatalogHash
+            'GuildrunFRV21.CatalogLegacy' = $policy.Profiles[0].PatchedCatalogHash
+        }
+        foreach ($entry in $expectedResources.GetEnumerator()) {
+            $stream = $assembly.GetManifestResourceStream($entry.Key)
+            Assert-True ($null -ne $stream) "Ressource embarquee absente : $($entry.Key)."
+            $sha = [Security.Cryptography.SHA256]::Create()
+            try { $actual = ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '') }
+            finally { $sha.Dispose(); $stream.Dispose() }
+            Assert-True ($actual -eq $entry.Value) "Ressource embarquee incorrecte : $($entry.Key)."
+        }
     }
 
     Invoke-Test 'Le profil historique selectionne son propre catalogue patche' {
@@ -285,6 +347,64 @@ try {
         Assert-True $thrown 'Echec simule non propage.'
         $after = Get-ContentHashes $root
         foreach ($name in $before.Keys) { Assert-True ($after[$name] -eq $before[$name]) "$name non restaure apres echec." }
+    }
+
+    Invoke-Test 'Une installation V2.1.1 complete est reconnue comme mise a niveau autorisee' {
+        $script:upgradeRoot = New-Fixture 'upgrade-v211-v212'
+        $script:upgradeOriginalHashes = Get-ContentHashes $script:upgradeRoot
+        $script:upgradeRegistry = New-MockRegistry $true 'String' 'de-DE'
+        Invoke-GuildrunV21Install -GameRoot $script:upgradeRoot -PayloadRoot $previousPayloadRoot -Policy $previousPolicy -RegistryReader $script:upgradeRegistry.Reader -RegistryWriter $script:upgradeRegistry.Writer -RegistryRestorer $script:upgradeRegistry.Restorer | Out-Null
+        $paths = Get-GuildrunV21Paths $script:upgradeRoot $payloadRoot $policy
+        $state = Get-GuildrunV21State $paths $policy
+        Assert-True ($state.Name -eq 'PreviousInstalled') 'La V2.1.1 complete n est pas reconnue.'
+        $paths = Set-GuildrunV21ProfilePaths $paths $state.Profile
+        $script:upgradeManifestPath = Join-Path $paths.BackupRoot 'manifest.json'
+        $script:upgradeManifestHash = Get-GuildrunSha256 $script:upgradeManifestPath
+        $script:upgradeBackup = Read-GuildrunPersistentBackup $paths
+    }
+
+    Invoke-Test 'La mise a niveau V2.1.1 vers V2.1.2 conserve la sauvegarde originale exacte' {
+        $beforeEnglish = (Get-ContentHashes $script:upgradeRoot).English
+        $result = Invoke-GuildrunV21Install -GameRoot $script:upgradeRoot -PayloadRoot $payloadRoot -Policy $policy -RegistryReader $script:upgradeRegistry.Reader -RegistryWriter $script:upgradeRegistry.Writer -RegistryRestorer $script:upgradeRegistry.Restorer
+        Assert-True ($result.State -eq 'Upgraded') 'Etat de mise a niveau inattendu.'
+        $after = Get-ContentHashes $script:upgradeRoot
+        Assert-True ($after.French -eq $policy.PatchedFrenchHash -and $after.Locales -eq $policy.PatchedLocalesHash -and $after.Catalog -eq $policy.PatchedCatalogHash) 'Triplet V2.1.2 incomplet apres mise a niveau.'
+        Assert-True ($after.English -eq $beforeEnglish) 'English a change pendant la mise a niveau.'
+        Assert-True ((Get-GuildrunSha256 $script:upgradeManifestPath) -eq $script:upgradeManifestHash) 'Le manifeste de sauvegarde originale a ete reecrit.'
+        $paths = Get-GuildrunV21Paths $script:upgradeRoot $payloadRoot $policy
+        $state = Get-GuildrunV21State $paths $policy
+        $paths = Set-GuildrunV21ProfilePaths $paths $state.Profile
+        $backup = Read-GuildrunPersistentBackup $paths
+        Assert-True ($backup.FrenchHash -eq $script:upgradeBackup.FrenchHash -and $backup.LocalesHash -eq $script:upgradeBackup.LocalesHash -and $backup.CatalogHash -eq $script:upgradeBackup.CatalogHash) 'La sauvegarde originale a change.'
+    }
+
+    Invoke-Test 'Apres mise a niveau, Restaurer remet les officiels et la preference anterieure a V2.1.1' {
+        Invoke-GuildrunV21Restore -GameRoot $script:upgradeRoot -PayloadRoot $payloadRoot -Policy $policy -RegistryReader $script:upgradeRegistry.Reader -RegistryRestorer $script:upgradeRegistry.Restorer | Out-Null
+        $restored = Get-ContentHashes $script:upgradeRoot
+        foreach ($name in $script:upgradeOriginalHashes.Keys) { Assert-True ($restored[$name] -eq $script:upgradeOriginalHashes[$name]) "$name non restaure apres mise a niveau." }
+        Assert-True ($script:upgradeRegistry.Store.Exists -and $script:upgradeRegistry.Store.Kind -eq 'String' -and $script:upgradeRegistry.Store.Value -ceq 'de-DE') 'Preference precedant V2.1.1 non restauree.'
+    }
+
+    Invoke-Test 'Un echec de mise a niveau restaure exactement V2.1.1 et conserve sa sauvegarde' {
+        $root = New-Fixture 'upgrade-rollback'
+        $registry = New-MockRegistry $true 'Binary' ([byte[]](101, 115, 0))
+        Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $previousPayloadRoot -Policy $previousPolicy -RegistryReader $registry.Reader -RegistryWriter $registry.Writer -RegistryRestorer $registry.Restorer | Out-Null
+        $before = Get-ContentHashes $root
+        $paths = Get-GuildrunV21Paths $root $payloadRoot $policy
+        $state = Get-GuildrunV21State $paths $policy
+        $paths = Set-GuildrunV21ProfilePaths $paths $state.Profile
+        $manifestPath = Join-Path $paths.BackupRoot 'manifest.json'
+        $manifestHash = Get-GuildrunSha256 $manifestPath
+        $thrown = $false
+        try {
+            Invoke-GuildrunV21Install -GameRoot $root -PayloadRoot $payloadRoot -Policy $policy -RegistryReader $registry.Reader -RegistryWriter $registry.Writer -RegistryRestorer $registry.Restorer -FailureInjector { param($stage) if ($stage -eq 'AfterCatalog') { throw 'echec upgrade simule' } } | Out-Null
+        }
+        catch { $thrown = $true }
+        Assert-True $thrown 'Echec de mise a niveau non propage.'
+        $after = Get-ContentHashes $root
+        foreach ($name in $before.Keys) { Assert-True ($after[$name] -eq $before[$name]) "$name V2.1.1 non restaure." }
+        Assert-True (([BitConverter]::ToString([byte[]]$registry.Store.Value)) -eq '66-72-00') 'Preference fr V2.1.1 non restauree apres rollback.'
+        Assert-True ((Get-GuildrunSha256 $manifestPath) -eq $manifestHash) 'Sauvegarde originale modifiee pendant le rollback.'
     }
 
     Invoke-Test 'Preference absente avant installation : existence et absence sont restaurees' {

@@ -13,10 +13,11 @@ if ([string]::IsNullOrWhiteSpace($AssetsToolsDll)) { $AssetsToolsDll = Join-Path
 $officialLocalesHash = 'D4A2D1D0DC9773DFA75E07778EE90EF9F13252DE96DF2E1D72F4A8476E3BBDC7'
 $officialCatalogLegacyHash = 'DC16E4280C5FAD3526AEC223B3C41F9A46B519D3EED96E1364EB20DA6A6A5783'
 $officialCatalogCurrentHash = '1E436E183F5CC451943F090AD2166B56D592EEBDB75C0D2AD210EEF7FDB26E85'
-$translatedFrenchHash = '67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E'
+$baselineFrenchHash = '67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E'
+$expectedFrenchHash = '7C8D467B719EEEE955C0226248EC90004277842B5017436607E7A01EAE388305'
 $expectedLocalesHash = 'D2885F99C6DB7495ABCF9D9F453AC0225AAFE80304FF29604BAB48ECE812AA9C'
-$expectedCatalogLegacyHash = '57A6EA642CE9DE2D89EB8F57FE083C66030834A8519806087D2EFE722A1231CC'
-$expectedCatalogCurrentHash = '581FE651C8CA4E89BFFC7F789995DA3EFA0EDAA40684F8160E7B2267BA370F4B'
+$expectedCatalogLegacyHash = '44BC589D21336E54170B5F39702BFAE8E07B971AB573B1459BD09008D6D97232'
+$expectedCatalogCurrentHash = '7B78213D5C73446074C59F223BAE05199D7C65ABB6F7CA77484AA7BE33657A71'
 $frenchPathId = [long]996707670718014713
 
 function Assert-Hash([string] $Path, [string] $Expected, [string] $Label) {
@@ -55,6 +56,8 @@ if (-not (Test-Path -LiteralPath $PayloadRoot)) { New-Item -ItemType Directory -
 $sourceLocales = Join-Path $SourcesRoot 'localization-locales_assets_all.bundle.official'
 $sourceCatalogLegacy = Join-Path $SourcesRoot 'catalog.bin.official'
 $sourceCatalogCurrent = Join-Path $SourcesRoot 'catalog-24613101.bin.official'
+$sourceFrench = Join-Path $SourcesRoot 'localization-string-tables-french(fr)_assets_all.v211.bundle'
+$correctionsPath = Join-Path $projectRoot 'translations\corrections-v2.1.2.fr.json'
 $frenchPayload = Join-Path $PayloadRoot 'localization-string-tables-french(fr)_assets_all.bundle'
 $localesOutput = Join-Path $PayloadRoot 'localization-locales_assets_all.bundle'
 $catalogOutputLegacy = Join-Path $PayloadRoot 'catalog-24551494.bin'
@@ -63,9 +66,98 @@ $catalogOutputCurrent = Join-Path $PayloadRoot 'catalog.bin'
 Assert-Hash $sourceLocales $officialLocalesHash 'Bundle Locales officiel'
 Assert-Hash $sourceCatalogLegacy $officialCatalogLegacyHash 'Catalog officiel BuildID 24551494'
 Assert-Hash $sourceCatalogCurrent $officialCatalogCurrentHash 'Catalog officiel BuildID 24613101'
-Assert-Hash $frenchPayload $translatedFrenchHash 'Bundle French traduit V2'
+Assert-Hash $sourceFrench $baselineFrenchHash 'Bundle French traduit V2.1.1 de reference'
 Assert-Hash $AssetsToolsDll '8D3CF02A877B0FA0363C7AA5AEDE18B8C1023519632F5E7EAC19AD084C743B34' 'AssetsTools.NET 3.0.5'
 [void][Reflection.Assembly]::LoadFrom([IO.Path]::GetFullPath($AssetsToolsDll))
+
+function New-CorrectedFrenchBundle([string] $Source, [string] $Output, [string] $CorrectionsFile) {
+    if (-not (Test-Path -LiteralPath $CorrectionsFile -PathType Leaf)) {
+        throw "Fichier de corrections introuvable : $CorrectionsFile"
+    }
+    $definition = Get-Content -Raw -Encoding UTF8 -LiteralPath $CorrectionsFile | ConvertFrom-Json
+    if ($definition.version -ne '2.1.2' -or @($definition.corrections).Count -ne 10) {
+        throw 'Le manifeste de corrections V2.1.2 est inattendu.'
+    }
+
+    $requested = @{}
+    foreach ($correction in $definition.corrections) {
+        $key = "$($correction.table):$($correction.id)"
+        if ($requested.ContainsKey($key)) { throw "Correction dupliquee : $key" }
+        $requested[$key] = $correction
+    }
+
+    $temporaryBundle = $Output + '.uncompressed.tmp'
+    try {
+        $manager = New-Object AssetsTools.NET.Extra.AssetsManager
+        $bundleInstance = $manager.LoadBundleFile([IO.Path]::GetFullPath($Source), $true)
+        $assetsInstance = $manager.LoadAssetsFileFromBundle($bundleInstance, 0, $false)
+        $applied = 0
+
+        foreach ($info in $assetsInstance.file.GetAssetsOfType(114)) {
+            $base = $manager.GetBaseField($assetsInstance, $info)
+            $assetName = $base.Get('m_Name').AsString
+            if (-not $assetName.EndsWith('_fr', [StringComparison]::Ordinal)) { continue }
+            $tableName = $assetName.Substring(0, $assetName.Length - 3)
+            $entries = $base.Get('m_TableData').Get('Array')
+            $changed = $false
+
+            foreach ($entry in $entries.Children) {
+                $key = "$tableName`:$($entry.Get('m_Id').AsULong)"
+                if (-not $requested.ContainsKey($key)) { continue }
+                $correction = $requested[$key]
+                if ([bool]$correction.add) { throw "La cle a ajouter existe deja : $key" }
+                $entry.Get('m_Localized').AsString = [string]$correction.text
+                $requested.Remove($key)
+                $applied++
+                $changed = $true
+            }
+
+            $additions = @($requested.GetEnumerator() | Where-Object {
+                $_.Value.table -eq $tableName -and [bool]$_.Value.add
+            })
+            foreach ($addition in $additions) {
+                $templateId = [uint64][string]$addition.Value.smartTemplateId
+                $template = $entries.Children | Where-Object { $_.Get('m_Id').AsULong -eq $templateId } | Select-Object -First 1
+                if ($null -eq $template) { throw "Modele Smart String introuvable pour $($addition.Key)." }
+                $newEntry = $template.Clone()
+                $newEntry.Get('m_Id').AsULong = [uint64][string]$addition.Value.id
+                $newEntry.Get('m_Localized').AsString = [string]$addition.Value.text
+                $entries.Children.Add($newEntry)
+                $entries.AsArray.size = $entries.Children.Count
+                $requested.Remove([string]$addition.Key)
+                $applied++
+                $changed = $true
+            }
+
+            if ($changed) { $info.SetNewData($base) }
+        }
+        if ($requested.Count -ne 0 -or $applied -ne 10) {
+            throw "Corrections French incompletes : $applied appliquee(s), $($requested.Count) restante(s)."
+        }
+
+        $bundleInstance.file.BlockAndDirInfo.DirectoryInfos[0].SetNewData($assetsInstance.file)
+        $writer = New-Object AssetsTools.NET.AssetsFileWriter($temporaryBundle)
+        $bundleInstance.file.Write($writer)
+        $writer.Close()
+
+        $stream = [IO.File]::OpenRead($temporaryBundle)
+        $reader = New-Object AssetsTools.NET.AssetsFileReader($stream)
+        $uncompressed = New-Object AssetsTools.NET.AssetBundleFile
+        $uncompressed.Read($reader)
+        $packedWriter = New-Object AssetsTools.NET.AssetsFileWriter($Output)
+        $uncompressed.Pack($packedWriter, [AssetsTools.NET.AssetBundleCompressionType]::LZ4)
+        $packedWriter.Close()
+        $uncompressed.Close()
+        $reader.Close()
+        $stream.Close()
+    }
+    finally {
+        if (Test-Path -LiteralPath $temporaryBundle) { Remove-Item -LiteralPath $temporaryBundle -Force }
+    }
+}
+
+New-CorrectedFrenchBundle $sourceFrench $frenchPayload $correctionsPath
+Assert-Hash $frenchPayload $expectedFrenchHash 'Bundle French traduit V2.1.2 reconstruit'
 
 $temporaryBundle = $localesOutput + '.uncompressed.tmp'
 try {
@@ -142,6 +234,7 @@ function New-PatchedCatalog([string] $Source, [string] $Output, [string] $Expect
 New-PatchedCatalog $sourceCatalogLegacy $catalogOutputLegacy $expectedCatalogLegacyHash '24551494'
 New-PatchedCatalog $sourceCatalogCurrent $catalogOutputCurrent $expectedCatalogCurrentHash '24613101'
 
-Write-Host 'Payload V2.1 reconstruit et verifie.'
+Write-Host 'Payload V2.1.2 reconstruit et verifie.'
+Write-Host 'French : 9 textes corriges et 1 cle manquante ajoutee.'
 Write-Host 'French PathID 996707670718014713 : Comment=EDITOR supprime.'
 Write-Host 'Catalogues 24551494 et 24613101 : octets 4723-4726 (Locales) et 6143-6146 (French) uniquement.'
