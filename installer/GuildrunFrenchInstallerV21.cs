@@ -6,7 +6,11 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+
+[assembly: AssemblyVersion("2.1.2.0")]
+[assembly: AssemblyFileVersion("2.1.2.0")]
 
 namespace GuildrunFrenchInstallerV21
 {
@@ -412,12 +416,18 @@ namespace GuildrunFrenchInstallerV21
         private readonly RoundedPanel pathPanel;
         private readonly RoundedPanel readyBadge;
         private readonly Label steamStatus;
+        private readonly Label installerUpdateStatus;
         private readonly Label footerStatus;
+        private readonly RoundedButton updateButton;
         private readonly Button detailsButton;
         private readonly Panel header;
         private readonly Panel footer;
+        private InstallerReleaseInfo availableRelease;
+        private bool updateCheckStarted;
+        private bool installerUpdateInProgress;
+        private bool patchOperationInProgress;
 
-        public InstallerForm()
+        public InstallerForm(string initialGameRoot)
         {
             Text = "Guildrun - Français V2.1.2";
             ClientSize = new Size(1080, 700);
@@ -440,12 +450,22 @@ namespace GuildrunFrenchInstallerV21
             Label brand = CreateLabel("Guildrun", 66, 25, 100, 28, Theme.Text, new Font("Segoe UI Semibold", 14F));
             Label language = CreateLabel("Français", 173, 27, 105, 25, Color.FromArgb(114, 165, 169), new Font("Segoe UI", 13F));
 
+            installerUpdateStatus = CreateLabel("Vérification de l’installateur…", ClientSize.Width - 530, 24, 272, 30, Theme.Muted, new Font("Segoe UI", 9.5F));
+            installerUpdateStatus.TextAlign = ContentAlignment.MiddleRight;
+            installerUpdateStatus.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            updateButton = new RoundedButton {
+                Left = ClientSize.Width - 243, Top = 21, Width = 122, Height = 36,
+                Text = "Mettre à jour", Font = new Font("Segoe UI Semibold", 9.5F), Radius = 9,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right, Visible = false
+            };
+            updateButton.Click += delegate { BeginInstallerUpdate(); };
+
             Button minimize = CreateWindowButton("—", 62);
             minimize.Click += delegate { WindowState = FormWindowState.Minimized; };
             Button close = CreateWindowButton("×", 17);
             close.Font = new Font("Segoe UI Light", 21F);
             close.Click += delegate { Close(); };
-            header.Controls.AddRange(new Control[] { smallMark, brand, language, minimize, close });
+            header.Controls.AddRange(new Control[] { smallMark, brand, language, installerUpdateStatus, updateButton, minimize, close });
 
             Panel headerLine = new Panel { Left = 1, Top = 78, Height = 1, BackColor = Theme.BorderSoft, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             headerLine.Width = ClientSize.Width - 2;
@@ -465,7 +485,7 @@ namespace GuildrunFrenchInstallerV21
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             Label rootLabel = CreateLabel("Emplacement du jeu", 28, 26, 220, 26, Theme.Text, new Font("Segoe UI Semibold", 11F));
-            steamStatus = CreateLabel("Steam détecté   ●", 433, 28, 165, 24, Theme.Accent, new Font("Segoe UI", 9.5F));
+            steamStatus = CreateLabel("Jeu détecté   ●", 433, 28, 165, 24, Theme.Accent, new Font("Segoe UI", 9.5F));
             steamStatus.TextAlign = ContentAlignment.MiddleRight;
             steamStatus.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 
@@ -477,7 +497,7 @@ namespace GuildrunFrenchInstallerV21
             FolderGlyph folderIcon = new FolderGlyph { Left = 14, Top = 6, Width = 34, Height = 34 };
             gameRoot = new TextBox {
                 Left = 50, Top = 14, Width = 408, Height = 24,
-                Text = DetectGameRoot(), BorderStyle = BorderStyle.None,
+                Text = String.IsNullOrWhiteSpace(initialGameRoot) ? DetectGameRoot() : initialGameRoot, BorderStyle = BorderStyle.None,
                 BackColor = Color.FromArgb(8, 23, 32), ForeColor = Theme.Muted,
                 Font = new Font("Segoe UI", 9.5F), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
@@ -542,7 +562,7 @@ namespace GuildrunFrenchInstallerV21
             });
 
             Resize += delegate { LayoutWindow(); UpdateWindowRegion(); };
-            Shown += delegate { UpdateDetection(); };
+            Shown += delegate { UpdateDetection(); BeginUpdateCheck(); };
             LayoutWindow();
             UpdateWindowRegion();
         }
@@ -664,7 +684,7 @@ namespace GuildrunFrenchInstallerV21
         private void UpdateDetection()
         {
             bool detected = File.Exists(Path.Combine(gameRoot.Text.Trim(), "Guildrun.exe"));
-            steamStatus.Text = detected ? "Steam détecté   ●" : "Dossier à vérifier   ●";
+            steamStatus.Text = detected ? "Jeu détecté   ●" : "Dossier à vérifier   ●";
             steamStatus.ForeColor = detected ? Theme.Accent : Theme.Error;
         }
 
@@ -678,6 +698,99 @@ namespace GuildrunFrenchInstallerV21
             }
         }
 
+        private void BeginUpdateCheck()
+        {
+            if (updateCheckStarted) return;
+            updateCheckStarted = true;
+            installerUpdateStatus.Text = "Vérification de l’installateur…";
+            installerUpdateStatus.ForeColor = Theme.Muted;
+            Version currentVersion = InstallerUpdateService.NormalizeVersion(Assembly.GetExecutingAssembly().GetName().Version);
+            Task.Factory.StartNew(delegate { return InstallerUpdateService.CheckLatestRelease(currentVersion); })
+                .ContinueWith(delegate(Task<InstallerUpdateCheckResult> task)
+                {
+                    if (IsDisposed || Disposing) return;
+                    try
+                    {
+                        BeginInvoke((Action)delegate
+                        {
+                            if (task.IsFaulted)
+                                ApplyUpdateCheck(new InstallerUpdateCheckResult { State = InstallerUpdateState.Unavailable, ErrorMessage = task.Exception.GetBaseException().Message });
+                            else ApplyUpdateCheck(task.Result);
+                        });
+                    }
+                    catch (InvalidOperationException) { }
+                });
+        }
+
+        private void ApplyUpdateCheck(InstallerUpdateCheckResult result)
+        {
+            availableRelease = null;
+            updateButton.Visible = false;
+            if (result != null && result.State == InstallerUpdateState.Available && result.Release != null)
+            {
+                availableRelease = result.Release;
+                installerUpdateStatus.Text = "Mise à jour disponible — " + result.Release.TagName;
+                installerUpdateStatus.ForeColor = Theme.AccentLight;
+                updateButton.Visible = true;
+                updateButton.Enabled = !patchOperationInProgress && !installerUpdateInProgress;
+            }
+            else if (result != null && result.State == InstallerUpdateState.UpToDate)
+            {
+                installerUpdateStatus.Text = "Installateur à jour ✓";
+                installerUpdateStatus.ForeColor = Theme.Accent;
+            }
+            else
+            {
+                installerUpdateStatus.Text = "Mise à jour non vérifiée";
+                installerUpdateStatus.ForeColor = Theme.Muted;
+            }
+        }
+
+        private void BeginInstallerUpdate()
+        {
+            if (availableRelease == null || installerUpdateInProgress || patchOperationInProgress) return;
+            InstallerReleaseInfo release = availableRelease;
+            installerUpdateInProgress = true;
+            installButton.Enabled = restoreButton.Enabled = browseButton.Enabled = updateButton.Enabled = false;
+            UseWaitCursor = true;
+            installerUpdateStatus.Text = "Téléchargement de " + release.TagName + "…";
+            installerUpdateStatus.ForeColor = Theme.Accent;
+
+            Task.Factory.StartNew(delegate { return InstallerUpdateService.DownloadAndPrepareInstaller(release); })
+                .ContinueWith(delegate(Task<string> task)
+                {
+                    if (IsDisposed || Disposing) return;
+                    try
+                    {
+                        BeginInvoke((Action)delegate
+                        {
+                            try
+                            {
+                                if (task.IsFaulted) throw task.Exception.GetBaseException();
+                                string encodedRoot = Convert.ToBase64String(Encoding.UTF8.GetBytes(gameRoot.Text.Trim()));
+                                Process.Start(new ProcessStartInfo {
+                                    FileName = task.Result,
+                                    Arguments = "--game-root-base64 " + encodedRoot,
+                                    UseShellExecute = true
+                                });
+                                Close();
+                            }
+                            catch (Exception ex)
+                            {
+                                installerUpdateInProgress = false;
+                                UseWaitCursor = false;
+                                installButton.Enabled = restoreButton.Enabled = browseButton.Enabled = true;
+                                updateButton.Enabled = true;
+                                installerUpdateStatus.Text = "Mise à jour disponible — " + release.TagName;
+                                installerUpdateStatus.ForeColor = Theme.AccentLight;
+                                MessageBox.Show(this, "La mise à jour de l’installateur n’a pas abouti.\n\n" + ex.Message + "\n\nL’installation du patch français reste disponible.", "Mise à jour non installée", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            }
+                        });
+                    }
+                    catch (InvalidOperationException) { }
+                });
+        }
+
         private void Run(bool restore)
         {
             string root = gameRoot.Text.Trim();
@@ -689,7 +802,9 @@ namespace GuildrunFrenchInstallerV21
                 return;
             }
 
+            patchOperationInProgress = true;
             installButton.Enabled = restoreButton.Enabled = browseButton.Enabled = false;
+            if (updateButton.Visible) updateButton.Enabled = false;
             UseWaitCursor = true;
             log.Clear();
             footerStatus.ForeColor = Theme.Accent;
@@ -718,7 +833,9 @@ namespace GuildrunFrenchInstallerV21
             finally
             {
                 UseWaitCursor = false;
+                patchOperationInProgress = false;
                 installButton.Enabled = restoreButton.Enabled = browseButton.Enabled = true;
+                if (updateButton.Visible && !installerUpdateInProgress) updateButton.Enabled = true;
             }
         }
 
@@ -815,11 +932,23 @@ namespace GuildrunFrenchInstallerV21
     internal static class Program
     {
         [STAThread]
-        private static void Main()
+        private static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new InstallerForm());
+            Application.Run(new InstallerForm(ReadInitialGameRoot(args)));
+        }
+
+        private static string ReadInitialGameRoot(string[] args)
+        {
+            if (args == null) return null;
+            for (int index = 0; index + 1 < args.Length; index++)
+            {
+                if (!args[index].Equals("--game-root-base64", StringComparison.OrdinalIgnoreCase)) continue;
+                try { return Encoding.UTF8.GetString(Convert.FromBase64String(args[index + 1])); }
+                catch (FormatException) { return null; }
+            }
+            return null;
         }
     }
 }

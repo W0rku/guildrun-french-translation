@@ -7,6 +7,7 @@ $v21Root = Split-Path -Parent $installerRoot
 $csc = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.2.exe'
 $source = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.cs'
+$updateSource = Join-Path $installerRoot 'InstallerUpdateService.cs'
 $manifest = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.manifest'
 $common = Join-Path $v21Root 'scripts\GuildrunV21.Common.ps1'
 $install = Join-Path $v21Root 'scripts\installer_traduction.ps1'
@@ -16,7 +17,7 @@ $locales = Join-Path $v21Root 'payload\localization-locales_assets_all.bundle'
 $catalogCurrent = Join-Path $v21Root 'payload\catalog.bin'
 $catalogLegacy = Join-Path $v21Root 'payload\catalog-24551494.bin'
 
-foreach ($required in @($csc, $source, $manifest, $common, $install, $restore, $french, $locales, $catalogCurrent, $catalogLegacy)) {
+foreach ($required in @($csc, $source, $updateSource, $manifest, $common, $install, $restore, $french, $locales, $catalogCurrent, $catalogLegacy)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Fichier requis introuvable : $required" }
 }
 $expected = @{
@@ -32,7 +33,7 @@ foreach ($entry in $expected.GetEnumerator()) {
 $arguments = @(
     '/nologo', '/target:winexe', '/platform:anycpu', '/optimize+', '/codepage:65001',
     "/out:$output", "/win32manifest:$manifest",
-    '/reference:System.dll', '/reference:System.Core.dll', '/reference:System.Drawing.dll', '/reference:System.Windows.Forms.dll',
+    '/reference:System.dll', '/reference:System.Core.dll', '/reference:System.Drawing.dll', '/reference:System.Windows.Forms.dll', '/reference:System.Web.Extensions.dll',
     "/resource:$common,GuildrunFRV21.Common",
     "/resource:$install,GuildrunFRV21.Install",
     "/resource:$restore,GuildrunFRV21.Restore",
@@ -40,7 +41,7 @@ $arguments = @(
     "/resource:$locales,GuildrunFRV21.Locales",
     "/resource:$catalogCurrent,GuildrunFRV21.CatalogCurrent",
     "/resource:$catalogLegacy,GuildrunFRV21.CatalogLegacy",
-    $source
+    $source, $updateSource
 )
 & $csc $arguments
 if ($LASTEXITCODE -ne 0) { throw "Compilation echouee avec le code $LASTEXITCODE." }

@@ -174,6 +174,24 @@ function Get-PreviousPolicy {
     $previous
 }
 
+function New-ReleaseJson([string] $Tag, [string] $AssetName, [string] $DownloadUrl, [string] $Digest, [string] $Body) {
+    [ordered]@{
+        tag_name = $Tag
+        html_url = "https://github.com/W0rku/guildrun-french-translation/releases/tag/$Tag"
+        body = $Body
+        draft = $false
+        prerelease = $false
+        assets = @(
+            [ordered]@{
+                name = $AssetName
+                state = 'uploaded'
+                browser_download_url = $DownloadUrl
+                digest = $Digest
+            }
+        )
+    } | ConvertTo-Json -Depth 6 -Compress
+}
+
 function Get-ByteDiffOffsets([string] $BeforePath, [string] $AfterPath) {
     $before = [IO.File]::ReadAllBytes($BeforePath)
     $after = [IO.File]::ReadAllBytes($AfterPath)
@@ -187,12 +205,90 @@ function Get-ByteDiffOffsets([string] $BeforePath, [string] $AfterPath) {
 
 $dll = Join-Path $projectRoot 'tools\vendor\AssetsTools.NET.dll'
 [void][Reflection.Assembly]::LoadFrom($dll)
+$updateServiceSource = Join-Path $projectRoot 'Installeur\InstallerUpdateService.cs'
+if (-not (Test-Path -LiteralPath $updateServiceSource)) { $updateServiceSource = Join-Path $projectRoot 'installer\InstallerUpdateService.cs' }
+Add-Type -Path $updateServiceSource -ReferencedAssemblies @('System.dll', 'System.Core.dll', 'System.Web.Extensions.dll')
 $workRoot = Join-Path $PSScriptRoot ('.work-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $workRoot | Out-Null
 $previousPayloadRoot = New-PreviousPayload
 $previousPolicy = Get-PreviousPolicy
 
 try {
+    Invoke-Test 'Version installateur identique : statut Installateur a jour' {
+        $json = New-ReleaseJson 'v2.1.2' 'Guildrun_Demo_FR_Installer_V2.1.2.exe' 'https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.2/Guildrun_Demo_FR_Installer_V2.1.2.exe' ('sha256:' + ('A' * 64)) ''
+        [Func[string,string]]$fetch = { param($url) $json }.GetNewClosure()
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.2', $fetch)
+        Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::UpToDate) 'Version identique annoncee comme mise a jour.'
+    }
+
+    Invoke-Test 'Release plus recente : version, asset et digest SHA-256 sont exposes' {
+        $expected = 'B' * 64
+        $json = New-ReleaseJson 'v2.1.3' 'Guildrun_Demo_FR_Installer_V2.1.3.exe' 'https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.3/Guildrun_Demo_FR_Installer_V2.1.3.exe' ('sha256:' + $expected) ''
+        [Func[string,string]]$fetch = { param($url) $json }.GetNewClosure()
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.2', $fetch)
+        Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::Available) 'Nouvelle Release non detectee.'
+        Assert-True ($result.Release.TagName -eq 'v2.1.3' -and $result.Release.AssetName -eq 'Guildrun_Demo_FR_Installer_V2.1.3.exe') 'Release ou asset incorrect.'
+        Assert-True ($result.Release.ExpectedSha256 -eq $expected) 'Digest GitHub non extrait.'
+    }
+
+    Invoke-Test 'Une Release plus ancienne ne provoque jamais de downgrade' {
+        $json = New-ReleaseJson 'v2.1.1' 'Guildrun_Demo_FR_Installer_V2.1.1.exe' 'https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.1/Guildrun_Demo_FR_Installer_V2.1.1.exe' $null ''
+        [Func[string,string]]$fetch = { param($url) $json }.GetNewClosure()
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.2', $fetch)
+        Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::UpToDate) 'Downgrade propose.'
+    }
+
+    Invoke-Test 'GitHub inaccessible : statut non bloquant Unavailable' {
+        [Func[string,string]]$fetch = { param($url) throw 'reseau indisponible simule' }
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.2', $fetch)
+        Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::Unavailable) 'Erreur reseau propagee au lieu d etre absorbee.'
+        Assert-True ($result.ErrorMessage -match 'indisponible') 'Cause reseau non conservee pour diagnostic.'
+    }
+
+    Invoke-Test 'Un asset hors du depot GitHub attendu est refuse' {
+        $json = New-ReleaseJson 'v2.1.3' 'Guildrun_Demo_FR_Installer_V2.1.3.exe' 'https://example.com/Guildrun_Demo_FR_Installer_V2.1.3.exe' $null ''
+        [Func[string,string]]$fetch = { param($url) $json }.GetNewClosure()
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.2', $fetch)
+        Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::Unavailable) 'URL externe acceptee.'
+    }
+
+    Invoke-Test 'Le SHA-256 peut etre lu dans les notes si le digest GitHub est absent' {
+        $expected = 'C' * 64
+        $asset = 'Guildrun_Demo_FR_Installer_V2.1.3.exe'
+        $json = New-ReleaseJson 'v2.1.3' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.3/$asset" $null ("SHA-256 $expected  $asset")
+        $release = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ParseLatestRelease($json)
+        Assert-True ($release.ExpectedSha256 -eq $expected) 'SHA-256 des notes non extrait.'
+    }
+
+    Invoke-Test 'Une Release sans empreinte reste utilisable avec verification de version interne' {
+        $asset = 'Guildrun_Demo_FR_Installer_V2.1.3.exe'
+        $json = New-ReleaseJson 'v2.1.3' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.3/$asset" $null ''
+        $release = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ParseLatestRelease($json)
+        Assert-True ($null -eq $release.ExpectedSha256) 'Empreinte inventee alors qu elle est absente.'
+    }
+
+    Invoke-Test 'La verification SHA-256 accepte le bon fichier et refuse toute divergence' {
+        $path = Join-Path $workRoot 'update-hash-fixture.exe'
+        [IO.File]::WriteAllBytes($path, [Text.Encoding]::UTF8.GetBytes('installateur simule'))
+        $expected = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ComputeSha256($path)
+        $actual = [GuildrunFrenchInstallerV21.InstallerUpdateService]::VerifySha256($path, $expected)
+        Assert-True ($actual -eq $expected) 'Bon SHA-256 refuse.'
+        $thrown = $false
+        try { [GuildrunFrenchInstallerV21.InstallerUpdateService]::VerifySha256($path, ('0' * 64)) | Out-Null } catch { $thrown = $true }
+        Assert-True $thrown 'Mauvais SHA-256 accepte.'
+    }
+
+    Invoke-Test 'L identite et la version internes du nouvel EXE correspondent a sa Release' {
+        $installerPath = Join-Path $projectRoot 'Installeur\Guildrun_Demo_FR_Installer_V2.1.2.exe'
+        if (-not (Test-Path -LiteralPath $installerPath)) { $installerPath = Join-Path $projectRoot 'installer\Guildrun_Demo_FR_Installer_V2.1.2.exe' }
+        $hash = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ComputeSha256($installerPath)
+        $asset = 'Guildrun_Demo_FR_Installer_V2.1.2.exe'
+        $json = New-ReleaseJson 'v2.1.2' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.2/$asset" ('sha256:' + $hash) ''
+        $release = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ParseLatestRelease($json)
+        $validated = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ValidateDownloadedInstaller($installerPath, $release)
+        Assert-True ($validated -eq $hash) 'Identite de l EXE compile non validee.'
+    }
+
     Invoke-Test 'Le Steam BuildID 24613101 officiel est reconnu par ses SHA-256' {
         $root = New-Fixture 'official-current-profile'
         $paths = Get-GuildrunV21Paths -GameRoot $root -PayloadRoot $payloadRoot -Policy $policy
