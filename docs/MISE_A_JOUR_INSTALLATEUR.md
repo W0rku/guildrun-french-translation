@@ -4,7 +4,7 @@ La vérification de l’installateur est volontairement séparée de la compatib
 
 | Statut | Source | Effet sur l’installation française |
 |---|---|---|
-| Version de l’installateur | Dernière Release publique GitHub | Aucun : information et bouton de mise à jour uniquement. |
+| Version de l’installateur | Dernière Release publique stable GitHub | Aucun : information et bouton de mise à jour uniquement. |
 | Compatibilité Guildrun | SHA-256 de `Guildrun.exe`, English, French, Locales et `catalog.bin` | Autorise ou refuse les écritures du patch. |
 
 ## Flux

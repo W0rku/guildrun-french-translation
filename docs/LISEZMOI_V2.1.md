@@ -6,7 +6,7 @@ La V2.1.2 corrige dix entrées françaises : trois libellés « Choisissez…�
 
 ## Mise à jour de l’installateur
 
-Au démarrage, l’interface interroge en arrière-plan la dernière Release publique de `W0rku/guildrun-french-translation`. Ce contrôle possède son propre libellé : il est indépendant de la détection et de la compatibilité de Guildrun.
+Au démarrage, l’interface interroge en arrière-plan la dernière Release publique stable de `W0rku/guildrun-french-translation`. Ce contrôle possède son propre libellé : il est indépendant de la détection et de la compatibilité de Guildrun.
 
 - version identique ou plus ancienne sur GitHub : **Installateur à jour ✓** ;
 - version plus récente : **Mise à jour disponible — vX.X.X** et bouton **Mettre à jour** ;
@@ -74,4 +74,4 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 7. Fermer et relancer le jeu : le Locale français doit rester sélectionné.
 8. Quitter le jeu, utiliser **Restaurer** pour remettre l’état précédent, puis vérifier avec Steam si l'on souhaite confirmer le retour exact aux fichiers officiels.
 
-La compilation V2.1.2 locale a réussi 37/37 tests automatisés, dont neuf scénarios propres à la mise à jour de l’installateur. Un test d’intégration contre GitHub a également confirmé la lecture de la Release publique V2.1.1 et de son digest SHA-256. La compilation doit encore être validée manuellement dans le jeu avant toute nouvelle Release ; la Release stable V2.1.1 reste inchangée.
+La V2.1.2 stable a réussi 37/37 tests automatisés, dont neuf scénarios propres à la mise à jour de l’installateur. Les utilisateurs de V2.1.1 doivent télécharger V2.1.2 depuis GitHub une dernière fois ; à partir de cette version, une Release stable plus récente fera apparaître le bouton **Mettre à jour**.
