@@ -3,7 +3,10 @@ param(
     [string] $EnglishBundle,
     [string] $BaselineFrenchBundle,
     [string] $CorrectedFrenchBundle,
-    [string] $AssetsToolsDll
+    [string] $AssetsToolsDll,
+    [string] $CorrectionsFile,
+    [string] $ExpectedVersion = '2.1.2',
+    [int] $ExpectedCorrections = 10
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,14 +18,16 @@ if ([string]::IsNullOrWhiteSpace($BaselineFrenchBundle)) {
     $BaselineFrenchBundle = Join-Path $projectRoot 'sources\localization-string-tables-french(fr)_assets_all.v211.bundle'
 }
 if ([string]::IsNullOrWhiteSpace($CorrectedFrenchBundle)) {
-    $CorrectedFrenchBundle = Join-Path $projectRoot 'payload\localization-string-tables-french(fr)_assets_all.bundle'
+    $CorrectedFrenchBundle = Join-Path $projectRoot 'payload\localization-string-tables-french(fr)_assets_all.v212.bundle'
 }
 if ([string]::IsNullOrWhiteSpace($AssetsToolsDll)) {
     $AssetsToolsDll = Join-Path $PSScriptRoot 'vendor\AssetsTools.NET.dll'
 }
-$correctionsPath = Join-Path $projectRoot 'translations\corrections-v2.1.2.fr.json'
+if ([string]::IsNullOrWhiteSpace($CorrectionsFile)) {
+    $CorrectionsFile = Join-Path $projectRoot 'translations\corrections-v2.1.2.fr.json'
+}
 
-foreach ($required in @($EnglishBundle, $BaselineFrenchBundle, $CorrectedFrenchBundle, $AssetsToolsDll, $correctionsPath)) {
+foreach ($required in @($EnglishBundle, $BaselineFrenchBundle, $CorrectedFrenchBundle, $AssetsToolsDll, $CorrectionsFile)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Fichier requis introuvable : $required" }
 }
 [void][Reflection.Assembly]::LoadFrom([IO.Path]::GetFullPath($AssetsToolsDll))
@@ -70,7 +75,9 @@ function Get-TokenSignature([string] $Text, [string] $Pattern, [int] $Group) {
 $english = Get-StringTableEntries $EnglishBundle '_en'
 $baseline = Get-StringTableEntries $BaselineFrenchBundle '_fr'
 $french = Get-StringTableEntries $CorrectedFrenchBundle '_fr'
-$definition = Get-Content -Raw -Encoding UTF8 -LiteralPath $correctionsPath | ConvertFrom-Json
+$definition = Get-Content -Raw -Encoding UTF8 -LiteralPath $CorrectionsFile | ConvertFrom-Json
+Assert-Audit ($definition.version -eq $ExpectedVersion) "Version du manifeste de corrections inattendue : $($definition.version)."
+Assert-Audit (@($definition.corrections).Count -eq $ExpectedCorrections) "Nombre de corrections declarees inattendu : $(@($definition.corrections).Count)."
 $declared = @{}
 foreach ($correction in $definition.corrections) { $declared["$($correction.table):$($correction.id)"] = [string]$correction.text }
 
@@ -83,7 +90,7 @@ Assert-Audit ($missing.Count -eq 0 -and $extra.Count -eq 0) "Ecart de cles : $($
 $changed = @($french.Keys | Where-Object { -not $baseline.ContainsKey($_) -or $baseline[$_].Text -cne $french[$_].Text })
 $removed = @($baseline.Keys | Where-Object { -not $french.ContainsKey($_) })
 Assert-Audit ($removed.Count -eq 0) "Des cles French V2.1.1 ont ete supprimees : $($removed -join ', ')."
-Assert-Audit ($changed.Count -eq 10) "Nombre de corrections effectives inattendu : $($changed.Count)."
+Assert-Audit ($changed.Count -eq $ExpectedCorrections) "Nombre de corrections effectives inattendu : $($changed.Count)."
 Assert-Audit (@($changed | Where-Object { -not $declared.ContainsKey($_) }).Count -eq 0) 'Une modification French n est pas declaree.'
 foreach ($key in $declared.Keys) {
     Assert-Audit ($french.ContainsKey($key)) "Correction absente : $key."
@@ -115,7 +122,7 @@ Assert-Audit ($tagMismatch.Count -eq 0) "Balises de gameplay divergentes : $($ta
 Assert-Audit ($placeholderWithoutSmart.Count -eq 0) "Formats dynamiques sans SmartFormatTag : $($placeholderWithoutSmart -join ', ')."
 Assert-Audit ($invalidSelector.Count -eq 0) "Selecteur Smart String traduit par erreur : $($invalidSelector -join ', ')."
 
-Write-Host 'Audit traduction V2.1.2 valide.'
+Write-Host "Audit traduction V$ExpectedVersion valide."
 Write-Host "English : $($english.Count) cles."
 Write-Host "French : $($french.Count) cles, aucune manquante."
 Write-Host "Corrections ciblees : $($changed.Count)."

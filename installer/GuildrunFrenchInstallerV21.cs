@@ -9,8 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("2.1.2.0")]
-[assembly: AssemblyFileVersion("2.1.2.0")]
+[assembly: AssemblyVersion("2.1.3.0")]
+[assembly: AssemblyFileVersion("2.1.3.0")]
 
 namespace GuildrunFrenchInstallerV21
 {
@@ -429,7 +429,7 @@ namespace GuildrunFrenchInstallerV21
 
         public InstallerForm(string initialGameRoot)
         {
-            Text = "Guildrun - Français V2.1.2";
+            Text = "Guildrun - Français V2.1.3";
             ClientSize = new Size(1080, 700);
             MinimumSize = new Size(980, 700);
             StartPosition = FormStartPosition.CenterScreen;
@@ -864,7 +864,7 @@ namespace GuildrunFrenchInstallerV21
 
         private static string ExecutePowerShell(string root, bool restore)
         {
-            string temporaryRoot = Path.Combine(Path.GetTempPath(), "GuildrunFRV212-" + Guid.NewGuid().ToString("N"));
+            string temporaryRoot = Path.Combine(Path.GetTempPath(), "GuildrunFRV213-" + Guid.NewGuid().ToString("N"));
             string scripts = Path.Combine(temporaryRoot, "scripts");
             string payload = Path.Combine(temporaryRoot, "payload");
             Directory.CreateDirectory(scripts);
@@ -874,10 +874,12 @@ namespace GuildrunFrenchInstallerV21
                 Extract("GuildrunFRV21.Common", Path.Combine(scripts, "GuildrunV21.Common.ps1"));
                 Extract("GuildrunFRV21.Install", Path.Combine(scripts, "installer_traduction.ps1"));
                 Extract("GuildrunFRV21.Restore", Path.Combine(scripts, "restaurer_sauvegarde.ps1"));
-                Extract("GuildrunFRV21.French", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.bundle"));
+                Extract("GuildrunFRV21.FrenchCurrent", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.bundle"));
+                Extract("GuildrunFRV21.FrenchLegacy", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.v212.bundle"));
                 Extract("GuildrunFRV21.Locales", Path.Combine(payload, "localization-locales_assets_all.bundle"));
-                Extract("GuildrunFRV21.CatalogCurrent", Path.Combine(payload, "catalog.bin"));
-                Extract("GuildrunFRV21.CatalogLegacy", Path.Combine(payload, "catalog-24551494.bin"));
+                Extract("GuildrunFRV21.Catalog24551494", Path.Combine(payload, "catalog-24551494.bin"));
+                Extract("GuildrunFRV21.Catalog24613101", Path.Combine(payload, "catalog.bin"));
+                Extract("GuildrunFRV21.Catalog24690909", Path.Combine(payload, "catalog-24690909.bin"));
 
                 string script = Path.Combine(scripts, restore ? "restaurer_sauvegarde.ps1" : "installer_traduction.ps1");
                 ProcessStartInfo start = new ProcessStartInfo {

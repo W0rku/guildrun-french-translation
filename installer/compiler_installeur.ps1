@@ -5,26 +5,58 @@ $ErrorActionPreference = 'Stop'
 $installerRoot = $PSScriptRoot
 $v21Root = Split-Path -Parent $installerRoot
 $csc = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.2.exe'
+$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.3.exe'
 $source = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.cs'
 $updateSource = Join-Path $installerRoot 'InstallerUpdateService.cs'
 $manifest = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.manifest'
 $common = Join-Path $v21Root 'scripts\GuildrunV21.Common.ps1'
 $install = Join-Path $v21Root 'scripts\installer_traduction.ps1'
 $restore = Join-Path $v21Root 'scripts\restaurer_sauvegarde.ps1'
-$french = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.bundle'
+$frenchCurrent = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.bundle'
+$frenchLegacy = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.v212.bundle'
 $locales = Join-Path $v21Root 'payload\localization-locales_assets_all.bundle'
-$catalogCurrent = Join-Path $v21Root 'payload\catalog.bin'
-$catalogLegacy = Join-Path $v21Root 'payload\catalog-24551494.bin'
+$catalog24551494 = Join-Path $v21Root 'payload\catalog-24551494.bin'
+$catalog24613101 = Join-Path $v21Root 'payload\catalog.bin'
+$catalog24690909 = Join-Path $v21Root 'payload\catalog-24690909.bin'
 
-foreach ($required in @($csc, $source, $updateSource, $manifest, $common, $install, $restore, $french, $locales, $catalogCurrent, $catalogLegacy)) {
+foreach ($required in @($csc, $source, $updateSource, $manifest, $common, $install, $restore, $frenchCurrent, $frenchLegacy, $locales, $catalog24551494, $catalog24613101, $catalog24690909)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Fichier requis introuvable : $required" }
 }
+
+. $common
+$policy = Get-GuildrunV21Policy
+function Get-BuildProfile([string] $SteamBuildId) {
+    $matches = @($policy.Profiles | Where-Object { $_.SteamBuildId -eq $SteamBuildId })
+    if ($matches.Count -ne 1) { throw "Profil Steam BuildID $SteamBuildId absent ou ambigu dans la politique V2.1." }
+    return $matches[0]
+}
+
+$profile24551494 = Get-BuildProfile '24551494'
+$profile24613101 = Get-BuildProfile '24613101'
+$profile24690909 = Get-BuildProfile '24690909'
+
+$expectedNames = @(
+    [pscustomobject]@{ Actual = $profile24551494.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.v212.bundle'; Label = 'French BuildID 24551494' }
+    [pscustomobject]@{ Actual = $profile24613101.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.v212.bundle'; Label = 'French BuildID 24613101' }
+    [pscustomobject]@{ Actual = $profile24690909.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.bundle'; Label = 'French BuildID 24690909' }
+    [pscustomobject]@{ Actual = $profile24551494.PayloadCatalogName; Expected = 'catalog-24551494.bin'; Label = 'catalogue BuildID 24551494' }
+    [pscustomobject]@{ Actual = $profile24613101.PayloadCatalogName; Expected = 'catalog.bin'; Label = 'catalogue BuildID 24613101' }
+    [pscustomobject]@{ Actual = $profile24690909.PayloadCatalogName; Expected = 'catalog-24690909.bin'; Label = 'catalogue BuildID 24690909' }
+)
+foreach ($entry in $expectedNames) {
+    if ($entry.Actual -ne $entry.Expected) { throw "Nom de payload inattendu pour $($entry.Label) : $($entry.Actual)" }
+}
+if ($profile24551494.PatchedFrenchHash -ne $profile24613101.PatchedFrenchHash) {
+    throw 'Les deux profils Guildrun 0.5.3 doivent partager exactement le payload French V2.1.2.'
+}
+
 $expected = @{
-    $french = '7C8D467B719EEEE955C0226248EC90004277842B5017436607E7A01EAE388305'
-    $locales = 'D2885F99C6DB7495ABCF9D9F453AC0225AAFE80304FF29604BAB48ECE812AA9C'
-    $catalogCurrent = '7B78213D5C73446074C59F223BAE05199D7C65ABB6F7CA77484AA7BE33657A71'
-    $catalogLegacy = '44BC589D21336E54170B5F39702BFAE8E07B971AB573B1459BD09008D6D97232'
+    $frenchLegacy = $profile24551494.PatchedFrenchHash
+    $frenchCurrent = $profile24690909.PatchedFrenchHash
+    $locales = $policy.PatchedLocalesHash
+    $catalog24551494 = $profile24551494.PatchedCatalogHash
+    $catalog24613101 = $profile24613101.PatchedCatalogHash
+    $catalog24690909 = $profile24690909.PatchedCatalogHash
 }
 foreach ($entry in $expected.GetEnumerator()) {
     if ((Get-FileHash -Algorithm SHA256 -LiteralPath $entry.Key).Hash -ne $entry.Value) { throw "Charge utile V2.1 invalide : $($entry.Key)" }
@@ -37,13 +69,15 @@ $arguments = @(
     "/resource:$common,GuildrunFRV21.Common",
     "/resource:$install,GuildrunFRV21.Install",
     "/resource:$restore,GuildrunFRV21.Restore",
-    "/resource:$french,GuildrunFRV21.French",
+    "/resource:$frenchCurrent,GuildrunFRV21.FrenchCurrent",
+    "/resource:$frenchLegacy,GuildrunFRV21.FrenchLegacy",
     "/resource:$locales,GuildrunFRV21.Locales",
-    "/resource:$catalogCurrent,GuildrunFRV21.CatalogCurrent",
-    "/resource:$catalogLegacy,GuildrunFRV21.CatalogLegacy",
+    "/resource:$catalog24551494,GuildrunFRV21.Catalog24551494",
+    "/resource:$catalog24613101,GuildrunFRV21.Catalog24613101",
+    "/resource:$catalog24690909,GuildrunFRV21.Catalog24690909",
     $source, $updateSource
 )
 & $csc $arguments
 if ($LASTEXITCODE -ne 0) { throw "Compilation echouee avec le code $LASTEXITCODE." }
-Write-Host "Installateur V2.1.2 multi-BuildID compile : $output"
+Write-Host "Installateur V2.1.3 multi-BuildID compile : $output"
 Write-Host "SHA-256 : $((Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash)"

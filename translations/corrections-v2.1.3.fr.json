@@ -1,0 +1,61 @@
+{
+  "version": "2.1.3",
+  "baselineSha256": "7C8D467B719EEEE955C0226248EC90004277842B5017436607E7A01EAE388305",
+  "corrections": [
+    {
+      "table": "ActiveAbilities",
+      "id": "2266028860751872",
+      "text": "Décochez une volée de [{0}+{6}_AttackSpeed]<statcalc_attackspeed> flèches sur les ennemis proches. Chaque flèche inflige [{1}+{2}_Attack+{3}_Magic]<statcalc_damage> dégâts et applique [{4}+{5}_Rank]<statcalc_frost> [Givre]<frost>.\n\n[Flèches max. :]<bold> {7}"
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540992749664",
+      "text": "Niklas dispose d’un emplacement d’objet supplémentaire. Lorsqu’il [survit]<bold> au combat, consommez l’objet situé dans son emplacement le plus à gauche pour gagner définitivement [{0}+{5}_Rank]<statcalc_rank> % de ses statistiques et des [Fragments]<shard> équivalant à [{1} % de sa valeur]<rhd>.\n\nPendant [Ruée ({2}),]<rush>, les [attaques automatiques]<bold> appliquent [{3}+{4}_MaxHealth]<statcalc_burn> [Brûlure]<burn> par objet équipé."
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540992749666",
+      "text": "Gagnez un emplacement d’objet.\n\nPendant [Ruée ({0}),]<rush>, gagnez [{1}+{2}_MaxHealth]<statcalc_shield> [Boucliers]<shield> par objet équipé."
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540992749672",
+      "text": "Lors d’un [lancement,]<bold> gagnez [{0}+{1}_MaxHealth]<statcalc_shield> [Boucliers]<shield>.\n\nChaque fois qu’un ennemi endommage un héros [Protégé]<shield>, infligez [{2}+{3}_Rank]<statcalc_burn> [Brûlure]<burn> à cet ennemi. [Renfort.]<backup>"
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540996943883",
+      "text": "Gagnez un emplacement d’objet.\n\nPendant [Ruée ({0}),]<rush>, les [Guerriers]<warrior> gagnent [{1}+{2}_Rank]<statcalc_attack> [Attaque]<attack> et [{3}+{4}_Rank]<statcalc_defense> [Défense]<defense> pour chaque déclenchement de [Ruée]<rush> durant cette partie. [Renfort.]<backup>"
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540996943917",
+      "text": "Lors d’un [coup critique,]<crit> volez [{0}+{1}_Crit]<statcalc_maxhp> [Santé]<health> à la cible."
+    },
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540996943919",
+      "text": "Lors d’une [attaque automatique,]<bold> réduisez le [Mana max.]<mana> de Karsu de {0} (min. : {4}).\n\nAprès [Temporisation ({1}),]<stall>, les flèches de [Perce-neige]<bold> gagnent [{2}+{3}_Rank]<statcalc_crit> [Critique]<crit>."
+    },
+    {
+      "table": "RankModifiers",
+      "id": "11912747969921212",
+      "text": "Après [Temporisation ({0}, {1}, {2}, {3} et {4}) :]<stall>, [provoquez]<taunt> tous les ennemis."
+    },
+    {
+      "table": "RankModifiers",
+      "id": "11912747974115406",
+      "text": "Après [Temporisation ({0}, {1} et {2}),]<stall> gagnez [{3} Mana]<mana>."
+    },
+    {
+      "table": "Relics",
+      "id": "21745596575236168",
+      "text": "Au [début du combat]<bold> et après [Temporisation ({0}),]<stall>, dépensez [{1} Fragment]<shard> pour appliquer {3} [Boucliers]<shield> [persistants]<lasting> à tous les héros, puis augmentez de façon permanente la valeur des [Boucliers]<shield> appliqués de {2}."
+    },
+    {
+      "table": "Relics",
+      "id": "66474939157307392",
+      "text": "Les ennemis gagnent [{0} % de statistiques de base]<basicstat>.\n\nLe [boss de l’acte {1}]<bold> résiste au [Givre,]<frost> ce qui réduit ses effets de {2} %."
+    }
+  ]
+}

@@ -10,10 +10,10 @@ $v21Root = Split-Path -Parent $PSScriptRoot
 try {
     $result = Invoke-GuildrunV21Install -GameRoot $GameRoot -PayloadRoot (Join-Path $v21Root 'payload')
     if ($result.State -eq 'AlreadyInstalled') {
-        Write-Host 'La traduction V2.1.2 etait deja installee. Le Locale fr a ete confirme.'
+        Write-Host 'La traduction compatible avec cette version du jeu etait deja installee. Le Locale fr a ete confirme.'
     }
     else {
-        Write-Host 'Traduction francaise V2.1.2 installee ou mise a niveau. French est visible, le Locale fr est selectionne et English est intact.'
+        Write-Host 'Traduction francaise V2.1.3 installee ou mise a niveau. French est visible, le Locale fr est selectionne et English est intact.'
     }
     Write-Host "Sauvegarde locale exacte : $($result.BackupRoot)"
 }

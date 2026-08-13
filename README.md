@@ -6,21 +6,21 @@ Ce projet ajoute **Français** comme une véritable langue dans le menu du jeu. 
 
 L’installation est contrôlée, sauvegarde les fichiers concernés et peut restaurer exactement leur état précédent.
 
-## Version V2.1.2
+## Version V2.1.3
 
-L’audit du 11 août 2026 confirme que Steam utilise toujours le BuildID `24613101` : les fichiers du jeu n’ont pas changé depuis la dernière version compatible. Le problème visible sur l’écran de sélection des héros venait de la table French V2.1.1, qui affichait littéralement une expression de formatage.
+Guildrun a été mis à jour en version `0.5.4`, build `767`, Steam BuildID `24690909`. La V2.1.3 reconnaît strictement cette nouvelle version et conserve les deux profils `0.5.3` déjà compatibles.
 
-Les sources V2.1.2 corrigent dix entrées ciblées, ajoutent l’unique clé French manquante et alignent les arguments, balises et métadonnées Smart String sur English. L’audit porte désormais sur **3 919 clés** et la mise à niveau transactionnelle depuis une V2.1.1 complète est couverte.
+La mise à jour du jeu ne retire et n’ajoute aucune clé, mais modifie plusieurs textes et paramètres de gameplay. La V2.1.3 adapte **11 entrées françaises** et utilise un payload propre à chaque version du jeu : French V2.1.2 reste associé aux builds `0.5.3`, tandis que French V2.1.3 est réservé au build `0.5.4`.
 
-À partir de V2.1.2, l’installateur vérifie également en arrière-plan la dernière Release publique stable. Le statut de sa propre version reste distinct de la compatibilité Guildrun : une panne GitHub ne bloque jamais l’installation ou la restauration du patch. Lorsqu’une version plus récente existe, un bouton **Mettre à jour** permet de télécharger son EXE depuis la Release attendue, de contrôler son SHA-256 lorsqu’il est publié, puis de valider son identité et sa version internes avant lancement.
+L’installateur vérifie également en arrière-plan la dernière Release publique stable. Le statut de sa propre version reste distinct de la compatibilité Guildrun : une panne GitHub ne bloque jamais l’installation ou la restauration du patch. Lorsqu’une version plus récente existe, le bouton **Mettre à jour** télécharge son EXE, contrôle son SHA-256, puis valide son identité et sa version internes avant lancement.
 
-L’ensemble passe **37/37 tests automatisés**. Voir le [fonctionnement de la mise à jour automatique](docs/MISE_A_JOUR_INSTALLATEUR.md).
+L’audit porte sur **3 919 clés** : aucune clé manquante, aucun argument, aucune balise de gameplay et aucune métadonnée Smart String divergents. L’ensemble passe **39/39 tests automatisés**. Voir le [fonctionnement de la mise à jour automatique](docs/MISE_A_JOUR_INSTALLATEUR.md).
 
-La V2.1.2 est la version stable actuelle. Les utilisateurs de V2.1.1 doivent effectuer ce passage une dernière fois depuis la page Releases ; les mises à jour suivantes pourront être proposées directement dans l’installateur. Voir le [rapport d’audit](docs/AUDIT_TRADUCTION_V2.1.2.md).
+La V2.1.3 est la version stable actuelle. Les installateurs V2.1.2 la proposent automatiquement dès que la Release publique est disponible. Voir le [rapport d’audit V2.1.3](docs/AUDIT_TRADUCTION_V2.1.3.md).
 
 ## Installation
 
-1. Télécharger `Guildrun_Demo_FR_Installer_V2.1.2.exe` depuis la page [Releases](https://github.com/W0rku/guildrun-french-translation/releases).
+1. Télécharger `Guildrun_Demo_FR_Installer_V2.1.3.exe` depuis la page [Releases](https://github.com/W0rku/guildrun-french-translation/releases).
 2. Fermer Guildrun.
 3. Lancer l’installateur, sélectionner le dossier du jeu et installer le français.
 
@@ -36,21 +36,23 @@ Au prochain lancement, choisir **French (fr)** dans les paramètres de langue si
 - Guildrun Demo `0.5.3`, build `748`
 - Steam BuildID `24551494`
 - Steam BuildID `24613101`
+- Guildrun Demo `0.5.4`, build `767`
+- Steam BuildID `24690909`
 - Windows x64 / Steam
 
 Une mise à jour de Guildrun peut modifier les fichiers contrôlés par l’installateur et nécessiter une nouvelle version du patch. Si la version est inconnue, l’installation est refusée sans modifier le jeu.
 
 ## Téléchargement et vérification
 
-La version stable est disponible dans les [Releases GitHub](https://github.com/W0rku/guildrun-french-translation/releases/tag/v2.1.2).
+La version stable est disponible dans les [Releases GitHub](https://github.com/W0rku/guildrun-french-translation/releases/tag/v2.1.3).
 
-**Guildrun_Demo_FR_Installer_V2.1.2.exe**
+**Guildrun_Demo_FR_Installer_V2.1.3.exe**
 
 ```text
-SHA-256  B8CD0C7240F31E856C62C5A78F755A6A8D79BA1C932014100397DEB0337BD8E6
+SHA-256  9B1881796B54C797785B7263F7F89B090E8CBF76FB09F21164EE0CD2CA7A6A41
 ```
 
-La V2.1.2 a réussi **37/37 tests automatisés**, y compris la compatibilité avec les deux BuildID, la mise à niveau transactionnelle depuis V2.1.1 et le contrôle automatique des Releases GitHub.
+La V2.1.3 a réussi **39/39 tests automatisés**, y compris la compatibilité avec les trois BuildID, le routage des payloads par version, le refus sans écriture du nouveau hash English lorsqu’il est inconnu, les rollbacks transactionnels et la mise à jour automatique.
 
 ## Code source et fichiers du jeu
 

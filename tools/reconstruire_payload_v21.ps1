@@ -13,11 +13,14 @@ if ([string]::IsNullOrWhiteSpace($AssetsToolsDll)) { $AssetsToolsDll = Join-Path
 $officialLocalesHash = 'D4A2D1D0DC9773DFA75E07778EE90EF9F13252DE96DF2E1D72F4A8476E3BBDC7'
 $officialCatalogLegacyHash = 'DC16E4280C5FAD3526AEC223B3C41F9A46B519D3EED96E1364EB20DA6A6A5783'
 $officialCatalogCurrentHash = '1E436E183F5CC451943F090AD2166B56D592EEBDB75C0D2AD210EEF7FDB26E85'
+$officialCatalogV213Hash = '647051CA4D8AAF4ED9E2BB13674E690333C689D9743F88D0DFB4DE3097FA820C'
 $baselineFrenchHash = '67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E'
-$expectedFrenchHash = '7C8D467B719EEEE955C0226248EC90004277842B5017436607E7A01EAE388305'
+$expectedFrenchLegacyHash = '7C8D467B719EEEE955C0226248EC90004277842B5017436607E7A01EAE388305'
+$expectedFrenchV213Hash = '07995AA60F88CCAE1FDE1FA375819099906BC0EBCAA0B424358637D00AADDE73'
 $expectedLocalesHash = 'D2885F99C6DB7495ABCF9D9F453AC0225AAFE80304FF29604BAB48ECE812AA9C'
 $expectedCatalogLegacyHash = '44BC589D21336E54170B5F39702BFAE8E07B971AB573B1459BD09008D6D97232'
 $expectedCatalogCurrentHash = '7B78213D5C73446074C59F223BAE05199D7C65ABB6F7CA77484AA7BE33657A71'
+$expectedCatalogV213Hash = '1A6271C3E89DC351D3780BB3A84BD6CE793AA4DB9E75F98F5E377B5E9AED6203'
 $frenchPathId = [long]996707670718014713
 
 function Assert-Hash([string] $Path, [string] $Expected, [string] $Label) {
@@ -56,27 +59,38 @@ if (-not (Test-Path -LiteralPath $PayloadRoot)) { New-Item -ItemType Directory -
 $sourceLocales = Join-Path $SourcesRoot 'localization-locales_assets_all.bundle.official'
 $sourceCatalogLegacy = Join-Path $SourcesRoot 'catalog.bin.official'
 $sourceCatalogCurrent = Join-Path $SourcesRoot 'catalog-24613101.bin.official'
+$sourceCatalogV213 = Join-Path $SourcesRoot 'catalog-24690909.bin.official'
 $sourceFrench = Join-Path $SourcesRoot 'localization-string-tables-french(fr)_assets_all.v211.bundle'
-$correctionsPath = Join-Path $projectRoot 'translations\corrections-v2.1.2.fr.json'
+$correctionsLegacyPath = Join-Path $projectRoot 'translations\corrections-v2.1.2.fr.json'
+$correctionsV213Path = Join-Path $projectRoot 'translations\corrections-v2.1.3.fr.json'
+$legacyFrenchPayload = Join-Path $PayloadRoot 'localization-string-tables-french(fr)_assets_all.v212.bundle'
 $frenchPayload = Join-Path $PayloadRoot 'localization-string-tables-french(fr)_assets_all.bundle'
 $localesOutput = Join-Path $PayloadRoot 'localization-locales_assets_all.bundle'
 $catalogOutputLegacy = Join-Path $PayloadRoot 'catalog-24551494.bin'
 $catalogOutputCurrent = Join-Path $PayloadRoot 'catalog.bin'
+$catalogOutputV213 = Join-Path $PayloadRoot 'catalog-24690909.bin'
 
 Assert-Hash $sourceLocales $officialLocalesHash 'Bundle Locales officiel'
 Assert-Hash $sourceCatalogLegacy $officialCatalogLegacyHash 'Catalog officiel BuildID 24551494'
 Assert-Hash $sourceCatalogCurrent $officialCatalogCurrentHash 'Catalog officiel BuildID 24613101'
+Assert-Hash $sourceCatalogV213 $officialCatalogV213Hash 'Catalog officiel BuildID 24690909'
 Assert-Hash $sourceFrench $baselineFrenchHash 'Bundle French traduit V2.1.1 de reference'
 Assert-Hash $AssetsToolsDll '8D3CF02A877B0FA0363C7AA5AEDE18B8C1023519632F5E7EAC19AD084C743B34' 'AssetsTools.NET 3.0.5'
 [void][Reflection.Assembly]::LoadFrom([IO.Path]::GetFullPath($AssetsToolsDll))
 
-function New-CorrectedFrenchBundle([string] $Source, [string] $Output, [string] $CorrectionsFile) {
+function New-CorrectedFrenchBundle(
+    [string] $Source,
+    [string] $Output,
+    [string] $CorrectionsFile,
+    [string] $ExpectedVersion,
+    [int] $ExpectedCount
+) {
     if (-not (Test-Path -LiteralPath $CorrectionsFile -PathType Leaf)) {
         throw "Fichier de corrections introuvable : $CorrectionsFile"
     }
     $definition = Get-Content -Raw -Encoding UTF8 -LiteralPath $CorrectionsFile | ConvertFrom-Json
-    if ($definition.version -ne '2.1.2' -or @($definition.corrections).Count -ne 10) {
-        throw 'Le manifeste de corrections V2.1.2 est inattendu.'
+    if ($definition.version -ne $ExpectedVersion -or @($definition.corrections).Count -ne $ExpectedCount) {
+        throw "Le manifeste de corrections V$ExpectedVersion est inattendu."
     }
 
     $requested = @{}
@@ -131,7 +145,7 @@ function New-CorrectedFrenchBundle([string] $Source, [string] $Output, [string] 
 
             if ($changed) { $info.SetNewData($base) }
         }
-        if ($requested.Count -ne 0 -or $applied -ne 10) {
+        if ($requested.Count -ne 0 -or $applied -ne $ExpectedCount) {
             throw "Corrections French incompletes : $applied appliquee(s), $($requested.Count) restante(s)."
         }
 
@@ -156,8 +170,10 @@ function New-CorrectedFrenchBundle([string] $Source, [string] $Output, [string] 
     }
 }
 
-New-CorrectedFrenchBundle $sourceFrench $frenchPayload $correctionsPath
-Assert-Hash $frenchPayload $expectedFrenchHash 'Bundle French traduit V2.1.2 reconstruit'
+New-CorrectedFrenchBundle $sourceFrench $legacyFrenchPayload $correctionsLegacyPath '2.1.2' 10
+Assert-Hash $legacyFrenchPayload $expectedFrenchLegacyHash 'Bundle French traduit V2.1.2 reconstruit'
+New-CorrectedFrenchBundle $legacyFrenchPayload $frenchPayload $correctionsV213Path '2.1.3' 11
+Assert-Hash $frenchPayload $expectedFrenchV213Hash 'Bundle French traduit V2.1.3 reconstruit'
 
 $temporaryBundle = $localesOutput + '.uncompressed.tmp'
 try {
@@ -213,11 +229,17 @@ finally {
 }
 Assert-Hash $localesOutput $expectedLocalesHash 'Bundle Locales V2.1 reconstruit'
 
-function New-PatchedCatalog([string] $Source, [string] $Output, [string] $ExpectedHash, [string] $BuildId) {
+function New-PatchedCatalog(
+    [string] $Source,
+    [string] $Output,
+    [string] $ExpectedHash,
+    [string] $BuildId,
+    [string] $FrenchBundle
+) {
     $catalog = [IO.File]::ReadAllBytes([IO.Path]::GetFullPath($Source))
     $changes = @(
         [pscustomobject]@{ Offset = 4723; Expected = [byte[]](0x66,0xD4,0x57,0xE3); Replacement = [BitConverter]::GetBytes((Get-BundleInternalCrc $localesOutput)); Label = 'Locales' },
-        [pscustomobject]@{ Offset = 6143; Expected = [byte[]](0xF9,0x6D,0x07,0xD8); Replacement = [BitConverter]::GetBytes((Get-BundleInternalCrc $frenchPayload)); Label = 'French' }
+        [pscustomobject]@{ Offset = 6143; Expected = [byte[]](0xF9,0x6D,0x07,0xD8); Replacement = [BitConverter]::GetBytes((Get-BundleInternalCrc $FrenchBundle)); Label = 'French' }
     )
     foreach ($change in $changes) {
         for ($index = 0; $index -lt 4; $index++) {
@@ -231,10 +253,12 @@ function New-PatchedCatalog([string] $Source, [string] $Output, [string] $Expect
     Assert-Hash $Output $ExpectedHash "Catalog V2.1 BuildID $BuildId reconstruit"
 }
 
-New-PatchedCatalog $sourceCatalogLegacy $catalogOutputLegacy $expectedCatalogLegacyHash '24551494'
-New-PatchedCatalog $sourceCatalogCurrent $catalogOutputCurrent $expectedCatalogCurrentHash '24613101'
+New-PatchedCatalog $sourceCatalogLegacy $catalogOutputLegacy $expectedCatalogLegacyHash '24551494' $legacyFrenchPayload
+New-PatchedCatalog $sourceCatalogCurrent $catalogOutputCurrent $expectedCatalogCurrentHash '24613101' $legacyFrenchPayload
+New-PatchedCatalog $sourceCatalogV213 $catalogOutputV213 $expectedCatalogV213Hash '24690909' $frenchPayload
 
-Write-Host 'Payload V2.1.2 reconstruit et verifie.'
-Write-Host 'French : 9 textes corriges et 1 cle manquante ajoutee.'
+Write-Host 'Payload V2.1.3 reconstruit et verifie.'
+Write-Host 'French V2.1.2 conserve pour les deux profils Guildrun 0.5.3.'
+Write-Host 'French V2.1.3 : 11 textes adaptes a Guildrun 0.5.4.'
 Write-Host 'French PathID 996707670718014713 : Comment=EDITOR supprime.'
-Write-Host 'Catalogues 24551494 et 24613101 : octets 4723-4726 (Locales) et 6143-6146 (French) uniquement.'
+Write-Host 'Catalogues 24551494, 24613101 et 24690909 : octets 4723-4726 (Locales) et 6143-6146 (French) uniquement.'
