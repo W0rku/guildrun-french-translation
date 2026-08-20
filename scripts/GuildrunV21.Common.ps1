@@ -46,28 +46,43 @@ function Get-GuildrunV21Policy {
             PreviousPatchedCatalogHash = $null
             PatchedFrenchHash = '07995AA60F88CCAE1FDE1FA375819099906BC0EBCAA0B424358637D00AADDE73'
             PatchedCatalogHash = '1A6271C3E89DC351D3780BB3A84BD6CE793AA4DB9E75F98F5E377B5E9AED6203'
-            PayloadFrenchName = 'localization-string-tables-french(fr)_assets_all.bundle'
+            PayloadFrenchName = 'localization-string-tables-french(fr)_assets_all.v213.bundle'
             PayloadCatalogName = 'catalog-24690909.bin'
             BackupDirectoryName = 'sauvegarde-locale-24690909'
+        },
+        [pscustomobject]@{
+            Name = 'Steam-24816645'
+            SteamBuildId = '24816645'
+            GameVersion = '0.5.5'
+            GameBuild = 783
+            OriginalEnglishHash = 'CA2B6A9BCEFBC64D44FEFE5B10C5FA77419C5081095584B7B8516C0EC82811BE'
+            OriginalCatalogHash = 'C48AAD223DB7A7DC3620CEBE29E8AF4C8F0B15990549B32A966DA48BF712F2BF'
+            PreviousPatchedFrenchHash = $null
+            PreviousPatchedCatalogHash = $null
+            PatchedFrenchHash = '907B489269EFD5F359C456CA62EC9FB5C77621B8CCB17AE1122F64F9434D321B'
+            PatchedCatalogHash = '0B47CD7DD74CDD840BABB1A5D4F696732F1116091C9035E53EB76D4488F5E28A'
+            PayloadFrenchName = 'localization-string-tables-french(fr)_assets_all.bundle'
+            PayloadCatalogName = 'catalog-24816645.bin'
+            BackupDirectoryName = 'sauvegarde-locale-24816645'
         }
     )
 
     [pscustomobject]@{
-        GameVersion          = $profiles[2].GameVersion
-        GameBuild            = $profiles[2].GameBuild
+        GameVersion          = $profiles[3].GameVersion
+        GameBuild            = $profiles[3].GameBuild
         EnglishBundleName    = 'localization-string-tables-english(en)_assets_all.bundle'
         FrenchBundleName     = 'localization-string-tables-french(fr)_assets_all.bundle'
         LocalesBundleName    = 'localization-locales_assets_all.bundle'
         CatalogName          = 'catalog.bin'
         OriginalExecutableHash = '33B701F9128366079EF47495259361A094D83DD293AB03B60870997B36D60882'
-        OriginalEnglishHash  = $profiles[2].OriginalEnglishHash
+        OriginalEnglishHash  = $profiles[3].OriginalEnglishHash
         OriginalFrenchHash   = 'C076AA88A443CC945992402D7DE40DCDFDC4DE27228745A37EC735E647C23A32'
         OriginalLocalesHash  = 'D4A2D1D0DC9773DFA75E07778EE90EF9F13252DE96DF2E1D72F4A8476E3BBDC7'
-        OriginalCatalogHash  = $profiles[2].OriginalCatalogHash
+        OriginalCatalogHash  = $profiles[3].OriginalCatalogHash
         PreviousPatchedFrenchHash = '67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E'
-        PatchedFrenchHash    = $profiles[2].PatchedFrenchHash
+        PatchedFrenchHash    = $profiles[3].PatchedFrenchHash
         PatchedLocalesHash   = 'D2885F99C6DB7495ABCF9D9F453AC0225AAFE80304FF29604BAB48ECE812AA9C'
-        PatchedCatalogHash   = $profiles[2].PatchedCatalogHash
+        PatchedCatalogHash   = $profiles[3].PatchedCatalogHash
         Profiles             = $profiles
     }
 }
@@ -96,7 +111,7 @@ function Get-GuildrunV21Paths {
         PayloadFrench   = Join-Path $resolvedPayloadRoot $Policy.FrenchBundleName
         PayloadLocales  = Join-Path $resolvedPayloadRoot $Policy.LocalesBundleName
         PayloadCatalog  = Join-Path $resolvedPayloadRoot $Policy.CatalogName
-        BackupRoot      = Join-Path $resolvedGameRoot 'Traduction_FR_V2.1\sauvegarde-locale-24690909'
+        BackupRoot      = Join-Path $resolvedGameRoot 'Traduction_FR_V2.1\sauvegarde-locale-24816645'
         TransactionRoot = Join-Path $resolvedGameRoot 'Traduction_FR_V2.1\.transactions'
     }
 }
@@ -187,7 +202,7 @@ function Get-GuildrunV21State {
     }
 
     if ($matches.Count -ne 1) {
-        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.3 sont acceptes. Aucun fichier n'a ete modifie."
+        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.4 sont acceptes. Aucun fichier n'a ete modifie."
     }
 
     $selected = $matches[0]

@@ -191,7 +191,7 @@ namespace GuildrunFrenchInstallerV21
         {
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
             TimeoutWebClient client = new TimeoutWebClient(timeoutMilliseconds);
-            client.Headers[HttpRequestHeader.UserAgent] = "Guildrun-French-Installer/2.1.3";
+            client.Headers[HttpRequestHeader.UserAgent] = "Guildrun-French-Installer/2.1.4";
             client.Headers[HttpRequestHeader.Accept] = "application/vnd.github+json";
             client.Headers["X-GitHub-Api-Version"] = "2022-11-28";
             return client;

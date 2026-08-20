@@ -1,0 +1,41 @@
+{
+  "version": "2.1.4",
+  "baselineSha256": "07995AA60F88CCAE1FDE1FA375819099906BC0EBCAA0B424358637D00AADDE73",
+  "corrections": [
+    {
+      "table": "PassiveAbilities",
+      "id": "9816540992749668",
+      "text": "Pendant [Ruée ({1}),]<rush> chaque fois qu’un [Avant-garde]<vanguard> ou un [Gardien]<tank> [subit une attaque automatique,]<bold> il inflige [{0} dégâts]<damage> à l’attaquant pour chaque [Fragment]<shard> [généré]<generate> durant cette partie. [Renfort.]<backup>"
+    },
+    {
+      "table": "RankModifiers",
+      "id": "11912747969921048",
+      "text": "Gagnez [{0} Portée]<attackrange> et [{1} Vitesse d’attaque]<attackspeed>."
+    },
+    {
+      "table": "RankModifiers",
+      "id": "11912747969921132",
+      "text": "Gagnez [{0} Portée]<attackrange> et [{1} Attaque]<attack>."
+    },
+    {
+      "table": "UI",
+      "id": "64027298696396811",
+      "text": "[Étourdissement :]<stun> Un personnage [Étourdi]<stun> ne peut ni bouger ni entreprendre d’actions. Lorsqu’ils sont [Étourdis,]<stun> les héros gagnent 25 % de [Résistance à l’étourdissement]<bold> cumulable pendant 15 secondes."
+    },
+    {
+      "table": "ActiveAbilities",
+      "id": "2266028835586048",
+      "text": "Frappez avec une masse pour infliger [{0}+{1}_MaxHealth+{2}_Attack+{3}_Magic]<statcalc_damage> dégâts et [étourdissez]<stun> la cible pendant {4} secondes.\n\nTous les {5} [lancements,]<bold> créez un [objet aléatoire]<wad>."
+    },
+    {
+      "table": "ActiveAbilities",
+      "id": "2266028843974656",
+      "text": "[Provoquez]<taunt> tous les ennemis. Gagnez [{5}+{6}_Rank]<statcalc_shield> [Boucliers]<shield>, plus [{0}+{1}_Defense+{2}_Magic]<statcalc_shield> [Boucliers]<shield> pour chaque déclenchement de [Temporisation]<stall> durant cette partie. Après {3} secondes, infligez à tous les ennemis qui ciblent Skorn des dégâts égaux à {4} % de ses [Boucliers]<shield> restants."
+    },
+    {
+      "table": "Relics",
+      "id": "11913064820228119",
+      "text": "Chaque fois qu’un [Duelliste]<duelist> [effectue une attaque automatique,]<bold> il inflige {0} [dégâts supplémentaires]<damage> par type de [Malus]<debuff> présent sur sa cible."
+    }
+  ]
+}

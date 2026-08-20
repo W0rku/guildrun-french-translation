@@ -1,8 +1,8 @@
-# Guildrun Demo — Traduction française V2.1.3
+# Guildrun Demo — Traduction française V2.1.4
 
-Cette révision cible **Guildrun Demo 0.5.3 build 748** et **0.5.4 build 767**. Elle reconnaît les Steam BuildID `24551494`, `24613101` et `24690909`, utilise le véritable Locale Unity `French (fr)` et ne remplace jamais le bundle anglais.
+Cette révision cible **Guildrun Demo 0.5.3 build 748**, **0.5.4 build 767** et **0.5.5 build 783**. Elle reconnaît les Steam BuildID `24551494`, `24613101`, `24690909` et `24816645`, utilise le véritable Locale Unity `French (fr)` et ne remplace jamais le bundle anglais.
 
-La V2.1.3 conserve les corrections V2.1.2 pour Guildrun 0.5.3 et adapte onze textes à la mise à jour 0.5.4. Les tables English et French contiennent chacune 3 919 clés, sans divergence de clé, d’argument, de balise ou de métadonnée Smart String.
+La V2.1.4 conserve les payloads validés des versions antérieures et adapte sept textes à la mise à jour 0.5.5. Les tables English et French contiennent chacune 3 919 clés, sans divergence de clé, d’argument, de balise ou de métadonnée Smart String.
 
 ## Mise à jour de l’installateur
 
@@ -49,7 +49,7 @@ Lors d’une mise à niveau depuis V2.1.1, la sauvegarde locale originale n’es
 
 ## Utilisation
 
-- Interface graphique : exécuter `Installeur/Guildrun_Demo_FR_Installer_V2.1.3.exe` en administrateur.
+- Interface graphique : exécuter `Installeur/Guildrun_Demo_FR_Installer_V2.1.4.exe` en administrateur.
 - Script : `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\installer_traduction.ps1`
 - Restauration : `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restaurer_sauvegarde.ps1`
 
@@ -66,7 +66,7 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 ## Test manuel dans le jeu
 
 1. Confirmer que la build affichée est l’une des versions compatibles documentées.
-2. Lancer l'installateur V2.1.3 et sélectionner le dossier contenant `Guildrun.exe`.
+2. Lancer l'installateur V2.1.4 et sélectionner le dossier contenant `Guildrun.exe`.
 3. Cliquer sur **Installer la V2.1** et attendre le message de réussite.
 4. Lancer le jeu normalement, sans `-language=en`.
 5. Ouvrir Settings > Language : `French (fr)` doit apparaître et `Japanese (ja)` doit rester absent.
@@ -74,4 +74,4 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 7. Fermer et relancer le jeu : le Locale français doit rester sélectionné.
 8. Quitter le jeu, utiliser **Restaurer** pour remettre l’état précédent, puis vérifier avec Steam si l'on souhaite confirmer le retour exact aux fichiers officiels.
 
-La V2.1.3 stable a réussi 39/39 tests automatisés. Une V2.1.2 détecte automatiquement cette Release stable et affiche le bouton **Mettre à jour**.
+La V2.1.4 stable a réussi 39/39 tests automatisés. Les installateurs antérieurs détectent automatiquement cette Release stable et affichent le bouton **Mettre à jour**.
