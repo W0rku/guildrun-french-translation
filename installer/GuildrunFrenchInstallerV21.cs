@@ -9,8 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("2.1.4.0")]
-[assembly: AssemblyFileVersion("2.1.4.0")]
+[assembly: AssemblyVersion("2.1.5.0")]
+[assembly: AssemblyFileVersion("2.1.5.0")]
 
 namespace GuildrunFrenchInstallerV21
 {
@@ -429,7 +429,7 @@ namespace GuildrunFrenchInstallerV21
 
         public InstallerForm(string initialGameRoot)
         {
-            Text = "Guildrun - Français V2.1.4";
+            Text = "Guildrun - Français V2.1.5";
             ClientSize = new Size(1080, 700);
             MinimumSize = new Size(980, 700);
             StartPosition = FormStartPosition.CenterScreen;
@@ -512,7 +512,7 @@ namespace GuildrunFrenchInstallerV21
 
             installButton = new AccentButton {
                 Left = 28, Top = 136, Width = 574, Height = 59,
-                Text = "↓    Installer le français", Font = new Font("Segoe UI Semibold", 13F),
+                Text = "↓    Installer / réactiver le français", Font = new Font("Segoe UI Semibold", 13F),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             restoreButton = new RoundedButton {

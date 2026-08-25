@@ -28,7 +28,7 @@ function Invoke-Test([string] $Name, [scriptblock] $Body) {
     }
 }
 
-function New-Fixture([string] $Name, [string] $SteamBuildId = '24816645') {
+function New-Fixture([string] $Name, [string] $SteamBuildId = '24930839') {
     $root = Join-Path $workRoot $Name
     $bundleRoot = Join-Path $root 'Guildrun_Data\StreamingAssets\aa\StandaloneWindows64'
     New-Item -ItemType Directory -Path $bundleRoot -Force | Out-Null
@@ -41,6 +41,7 @@ function New-Fixture([string] $Name, [string] $SteamBuildId = '24816645') {
         '24613101' { 'catalog-24613101.bin.official' }
         '24690909' { 'catalog-24690909.bin.official' }
         '24816645' { 'catalog-24816645.bin.official' }
+        '24930839' { 'catalog-24816645.bin.official' }
         default { throw "BuildID de fixture inconnu : $SteamBuildId" }
     }
     Copy-Item -LiteralPath (Join-Path $sourcesRoot $catalogSource) -Destination (Join-Path (Split-Path -Parent $bundleRoot) 'catalog.bin')
@@ -240,54 +241,54 @@ $previousPayloadRoot = New-PreviousPayload $previousPolicy
 
 try {
     Invoke-Test 'Version installateur identique : statut Installateur a jour' {
-        $json = New-ReleaseJson 'v2.1.4' 'Guildrun_Demo_FR_Installer_V2.1.4.exe' 'https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.4/Guildrun_Demo_FR_Installer_V2.1.4.exe' ('sha256:' + ('A' * 64)) ''
+        $json = New-ReleaseJson 'v2.1.5' 'Guildrun_Demo_FR_Installer_V2.1.5.exe' 'https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.5/Guildrun_Demo_FR_Installer_V2.1.5.exe' ('sha256:' + ('A' * 64)) ''
         [Func[string,string]]$fetch = { param($url) $json }.GetNewClosure()
-        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.4', $fetch)
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.5', $fetch)
         Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::UpToDate) 'Version identique annoncee comme mise a jour.'
     }
 
     Invoke-Test 'Release plus recente : version, asset et digest SHA-256 sont exposes' {
         $expected = 'B' * 64
-        $json = New-ReleaseJson 'v2.1.5' 'Guildrun_Demo_FR_Installer_V2.1.5.exe' 'https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.5/Guildrun_Demo_FR_Installer_V2.1.5.exe' ('sha256:' + $expected) ''
+        $json = New-ReleaseJson 'v2.1.6' 'Guildrun_Demo_FR_Installer_V2.1.6.exe' 'https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.6/Guildrun_Demo_FR_Installer_V2.1.6.exe' ('sha256:' + $expected) ''
         [Func[string,string]]$fetch = { param($url) $json }.GetNewClosure()
-        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.4', $fetch)
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.5', $fetch)
         Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::Available) 'Nouvelle Release non detectee.'
-        Assert-True ($result.Release.TagName -eq 'v2.1.5' -and $result.Release.AssetName -eq 'Guildrun_Demo_FR_Installer_V2.1.5.exe') 'Release ou asset incorrect.'
+        Assert-True ($result.Release.TagName -eq 'v2.1.6' -and $result.Release.AssetName -eq 'Guildrun_Demo_FR_Installer_V2.1.6.exe') 'Release ou asset incorrect.'
         Assert-True ($result.Release.ExpectedSha256 -eq $expected) 'Digest GitHub non extrait.'
     }
 
     Invoke-Test 'Une Release plus ancienne ne provoque jamais de downgrade' {
         $json = New-ReleaseJson 'v2.1.1' 'Guildrun_Demo_FR_Installer_V2.1.1.exe' 'https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.1/Guildrun_Demo_FR_Installer_V2.1.1.exe' $null ''
         [Func[string,string]]$fetch = { param($url) $json }.GetNewClosure()
-        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.4', $fetch)
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.5', $fetch)
         Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::UpToDate) 'Downgrade propose.'
     }
 
     Invoke-Test 'GitHub inaccessible : statut non bloquant Unavailable' {
         [Func[string,string]]$fetch = { param($url) throw 'reseau indisponible simule' }
-        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.4', $fetch)
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.5', $fetch)
         Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::Unavailable) 'Erreur reseau propagee au lieu d etre absorbee.'
         Assert-True ($result.ErrorMessage -match 'indisponible') 'Cause reseau non conservee pour diagnostic.'
     }
 
     Invoke-Test 'Un asset hors du depot GitHub attendu est refuse' {
-        $json = New-ReleaseJson 'v2.1.4' 'Guildrun_Demo_FR_Installer_V2.1.4.exe' 'https://example.com/Guildrun_Demo_FR_Installer_V2.1.4.exe' $null ''
+        $json = New-ReleaseJson 'v2.1.5' 'Guildrun_Demo_FR_Installer_V2.1.5.exe' 'https://example.com/Guildrun_Demo_FR_Installer_V2.1.5.exe' $null ''
         [Func[string,string]]$fetch = { param($url) $json }.GetNewClosure()
-        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.4', $fetch)
+        $result = [GuildrunFrenchInstallerV21.InstallerUpdateService]::CheckLatestRelease([Version]'2.1.5', $fetch)
         Assert-True ($result.State -eq [GuildrunFrenchInstallerV21.InstallerUpdateState]::Unavailable) 'URL externe acceptee.'
     }
 
     Invoke-Test 'Le SHA-256 peut etre lu dans les notes si le digest GitHub est absent' {
         $expected = 'C' * 64
-        $asset = 'Guildrun_Demo_FR_Installer_V2.1.4.exe'
-        $json = New-ReleaseJson 'v2.1.4' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.4/$asset" $null ("SHA-256 $expected  $asset")
+        $asset = 'Guildrun_Demo_FR_Installer_V2.1.5.exe'
+        $json = New-ReleaseJson 'v2.1.5' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.5/$asset" $null ("SHA-256 $expected  $asset")
         $release = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ParseLatestRelease($json)
         Assert-True ($release.ExpectedSha256 -eq $expected) 'SHA-256 des notes non extrait.'
     }
 
     Invoke-Test 'Une Release sans empreinte reste utilisable avec verification de version interne' {
-        $asset = 'Guildrun_Demo_FR_Installer_V2.1.4.exe'
-        $json = New-ReleaseJson 'v2.1.4' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.4/$asset" $null ''
+        $asset = 'Guildrun_Demo_FR_Installer_V2.1.5.exe'
+        $json = New-ReleaseJson 'v2.1.5' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.5/$asset" $null ''
         $release = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ParseLatestRelease($json)
         Assert-True ($null -eq $release.ExpectedSha256) 'Empreinte inventee alors qu elle est absente.'
     }
@@ -304,25 +305,25 @@ try {
     }
 
     Invoke-Test 'L identite et la version internes du nouvel EXE correspondent a sa Release' {
-        $installerPath = Join-Path $projectRoot 'Installeur\Guildrun_Demo_FR_Installer_V2.1.4.exe'
-        if (-not (Test-Path -LiteralPath $installerPath)) { $installerPath = Join-Path $projectRoot 'installer\Guildrun_Demo_FR_Installer_V2.1.4.exe' }
+        $installerPath = Join-Path $projectRoot 'Installeur\Guildrun_Demo_FR_Installer_V2.1.5.exe'
+        if (-not (Test-Path -LiteralPath $installerPath)) { $installerPath = Join-Path $projectRoot 'installer\Guildrun_Demo_FR_Installer_V2.1.5.exe' }
         $hash = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ComputeSha256($installerPath)
-        $asset = 'Guildrun_Demo_FR_Installer_V2.1.4.exe'
-        $json = New-ReleaseJson 'v2.1.4' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.4/$asset" ('sha256:' + $hash) ''
+        $asset = 'Guildrun_Demo_FR_Installer_V2.1.5.exe'
+        $json = New-ReleaseJson 'v2.1.5' $asset "https://github.com/W0rku/guildrun-french-translation/releases/download/v2.1.5/$asset" ('sha256:' + $hash) ''
         $release = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ParseLatestRelease($json)
         $validated = [GuildrunFrenchInstallerV21.InstallerUpdateService]::ValidateDownloadedInstaller($installerPath, $release)
         Assert-True ($validated -eq $hash) 'Identite de l EXE compile non validee.'
     }
 
-    Invoke-Test 'Le Steam BuildID 24816645 officiel est reconnu par ses SHA-256' {
+    Invoke-Test 'Le Steam BuildID 24930839 officiel est reconnu par ses SHA-256' {
         $root = New-Fixture 'official-current-profile'
         $paths = Get-GuildrunV21Paths -GameRoot $root -PayloadRoot $payloadRoot -Policy $policy
         $state = Get-GuildrunV21State $paths $policy
-        Assert-True ($state.Name -eq 'Original' -and $state.SteamBuildId -eq '24816645') 'Profil Steam courant non reconnu.'
+        Assert-True ($state.Name -eq 'Original' -and $state.SteamBuildId -eq '24930839') 'Profil Steam courant non reconnu.'
     }
 
     Invoke-Test 'Les quatre profils Steam sont declares strictement et routes vers le bon French' {
-        Assert-True (($policy.Profiles.SteamBuildId -join ',') -eq '24551494,24613101,24690909,24816645') 'Liste de profils incorrecte.'
+        Assert-True (($policy.Profiles.SteamBuildId -join ',') -eq '24551494,24613101,24690909,24930839') 'Liste de profils incorrecte.'
         Assert-True ($policy.Profiles[0].OriginalEnglishHash -eq '8D9798819E3A2DDEE313E0BCB426030B540B7FD3195AA7BB8B24559983606629') 'Hash English historique incorrect.'
         Assert-True ($policy.Profiles[1].OriginalEnglishHash -eq '30A0230858D555CBF2900CD1B2936CA4A148CFFF8E09677870155D39EB338744') 'Nouveau hash English incorrect.'
         Assert-True ($policy.Profiles[2].OriginalEnglishHash -eq 'A39EB85FAE5C1EBBF6385D9D7798E6D8F8287D55402098FDF5AB96D288ACCA8F') 'Hash English 0.5.4 incorrect.'
@@ -333,7 +334,8 @@ try {
         Assert-True ($policy.Profiles[2].PayloadFrenchName -eq 'localization-string-tables-french(fr)_assets_all.v213.bundle' -and $policy.Profiles[2].PatchedFrenchHash -eq '07995AA60F88CCAE1FDE1FA375819099906BC0EBCAA0B424358637D00AADDE73') 'French V2.1.3 legacy incorrect.'
         Assert-True ($policy.Profiles[3].OriginalEnglishHash -eq 'CA2B6A9BCEFBC64D44FEFE5B10C5FA77419C5081095584B7B8516C0EC82811BE') 'Hash English 0.5.5 incorrect.'
         Assert-True ($policy.Profiles[3].OriginalCatalogHash -eq 'C48AAD223DB7A7DC3620CEBE29E8AF4C8F0B15990549B32A966DA48BF712F2BF') 'Hash catalogue officiel 0.5.5 incorrect.'
-        Assert-True ($policy.Profiles[3].GameVersion -eq '0.5.5' -and $policy.Profiles[3].GameBuild -eq 783) 'Version/build 0.5.5 incorrects.'
+        Assert-True ($policy.Profiles[3].GameVersion -eq '0.5.6' -and $policy.Profiles[3].GameBuild -eq 792) 'Version/build 0.5.6 incorrects.'
+        Assert-True (($policy.Profiles[3].CompatibleSteamBuildIds -join ',') -eq '24816645,24930839') 'Alias BuildID 0.5.5/0.5.6 incorrects.'
         Assert-True ($policy.Profiles[3].PayloadFrenchName -eq $policy.FrenchBundleName -and $policy.Profiles[3].PatchedFrenchHash -eq '907B489269EFD5F359C456CA62EC9FB5C77621B8CCB17AE1122F64F9434D321B') 'French V2.1.4 courant incorrect.'
         Assert-True ($policy.Profiles[0].PreviousPatchedCatalogHash -eq '57A6EA642CE9DE2D89EB8F57FE083C66030834A8519806087D2EFE722A1231CC') 'Catalogue V2.1.1 historique non declare.'
         Assert-True ($policy.Profiles[1].PreviousPatchedCatalogHash -eq '581FE651C8CA4E89BFFC7F789995DA3EFA0EDAA40684F8160E7B2267BA370F4B') 'Catalogue V2.1.1 courant non declare.'
@@ -410,10 +412,10 @@ try {
         Assert-True (($v214Diff -join ',') -eq $expected) "Diff 0.5.5 incorrect: $($v214Diff -join ',')"
     }
 
-    Invoke-Test 'L installateur V2.1.4 embarque exactement les huit payloads verifies' {
+    Invoke-Test 'L installateur V2.1.5 embarque exactement les huit payloads verifies' {
         $installerDirectory = if (Test-Path -LiteralPath (Join-Path $projectRoot 'Installeur')) { 'Installeur' } else { 'installer' }
-        $installerPath = Join-Path $projectRoot (Join-Path $installerDirectory 'Guildrun_Demo_FR_Installer_V2.1.4.exe')
-        Assert-True (Test-Path -LiteralPath $installerPath -PathType Leaf) 'Installateur V2.1.4 non compile.'
+        $installerPath = Join-Path $projectRoot (Join-Path $installerDirectory 'Guildrun_Demo_FR_Installer_V2.1.5.exe')
+        Assert-True (Test-Path -LiteralPath $installerPath -PathType Leaf) 'Installateur V2.1.5 non compile.'
         $assembly = [Reflection.Assembly]::LoadFile([IO.Path]::GetFullPath($installerPath))
         $expectedResources = [ordered]@{
             'GuildrunFRV21.FrenchCurrent' = $policy.Profiles[3].PatchedFrenchHash
@@ -479,7 +481,24 @@ try {
         $backup = Read-GuildrunPersistentBackup $paths
         Assert-True ($backup.FrenchHash -eq $policy.OriginalFrenchHash -and $backup.LocalesHash -eq $policy.OriginalLocalesHash -and $backup.CatalogHash -eq $policy.OriginalCatalogHash) 'Sauvegarde inexacte.'
         Assert-True (-not $backup.RegistryState.Exists) 'Absence initiale de la preference non sauvegardee.'
-        Assert-True ($backup.Manifest.GameVersion -eq '0.5.5' -and $backup.Manifest.GameBuild -eq 783 -and [string]$backup.Manifest.SteamBuildId -eq '24816645') 'Profil 0.5.5 absent du manifeste de sauvegarde.'
+        Assert-True ($backup.Manifest.GameVersion -eq '0.5.6' -and $backup.Manifest.GameBuild -eq 792 -and [string]$backup.Manifest.SteamBuildId -eq '24930839') 'Profil 0.5.6 absent du manifeste de sauvegarde.'
+    }
+
+    Invoke-Test 'La sauvegarde V2.1.4 BuildID 24816645 reste acceptee sur le BuildID 24930839' {
+        $paths = Get-GuildrunV21Paths $installRoot $payloadRoot $policy
+        $backup = Read-GuildrunPersistentBackup $paths
+        $backup.Manifest.SteamBuildId = '24816645'
+        Assert-GuildrunOriginalPersistentBackup -Backup $backup -Policy $policy -Profile $policy.Profiles[3]
+    }
+
+    Invoke-Test 'Une installation deja presente recree exactement la preference fr si Steam l a supprimee' {
+        $installRegistry.Store.Exists = $false
+        $installRegistry.Store.Kind = $null
+        $installRegistry.Store.Value = $null
+        $result = Invoke-GuildrunV21Install -GameRoot $installRoot -PayloadRoot $payloadRoot -RegistryReader $installRegistry.Reader -RegistryWriter $installRegistry.Writer -RegistryRestorer $installRegistry.Restorer
+        Assert-True ($result.State -eq 'AlreadyInstalled') 'Installation existante non reconnue.'
+        Assert-True ($installRegistry.Store.Exists -and $installRegistry.Store.Kind -eq 'Binary') 'Preference fr non recreee.'
+        Assert-True (([BitConverter]::ToString([byte[]]$installRegistry.Store.Value)) -eq '66-72-00') 'Contenu fr recree incorrect.'
     }
 
     Invoke-Test 'La restauration remet exactement les trois fichiers officiels et supprime une preference initialement absente' {

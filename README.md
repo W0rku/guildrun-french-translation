@@ -6,21 +6,21 @@ Ce projet ajoute **Français** comme une véritable langue dans le menu du jeu. 
 
 L’installation est contrôlée, sauvegarde les fichiers concernés et peut restaurer exactement leur état précédent.
 
-## Version V2.1.4
+## Version V2.1.5
 
-Guildrun a été mis à jour en version `0.5.5`, build `783`, Steam BuildID `24816645`. La V2.1.4 reconnaît strictement cette nouvelle version et conserve les trois profils antérieurs déjà compatibles.
+Guildrun a été mis à jour en version `0.5.6`, build `792`, Steam BuildID `24930839`. La V2.1.5 reconnaît cette version et conserve les quatre BuildID antérieurs déjà compatibles.
 
-La mise à jour du jeu ne retire et n’ajoute aucune clé. La V2.1.4 adapte **7 entrées françaises** dont la structure ou le sens a changé, notamment la résistance à l’étourdissement, et utilise un payload propre à chaque version du jeu.
+Cette mise à jour ne modifie aucune table de langue : le payload French V2.1.4 reste strictement identique et validé. La V2.1.5 ajoute le nouveau profil de compatibilité et peut **réactiver le français** si Steam a supprimé la préférence Unity `fr`, tout en conservant la sauvegarde locale V2.1.4.
 
 L’installateur vérifie également en arrière-plan la dernière Release publique stable. Le statut de sa propre version reste distinct de la compatibilité Guildrun : une panne GitHub ne bloque jamais l’installation ou la restauration du patch. Lorsqu’une version plus récente existe, le bouton **Mettre à jour** télécharge son EXE, contrôle son SHA-256, puis valide son identité et sa version internes avant lancement.
 
-L’audit porte sur **3 919 clés** : aucune clé manquante, aucun argument, aucune balise de gameplay et aucune métadonnée Smart String divergents. L’ensemble passe **39/39 tests automatisés**. Voir le [fonctionnement de la mise à jour automatique](docs/MISE_A_JOUR_INSTALLATEUR.md).
+L’audit porte sur **3 919 clés** : aucune clé manquante, aucun argument, aucune balise de gameplay et aucune métadonnée Smart String divergents. L’ensemble passe **41/41 tests automatisés**. Voir le [fonctionnement de la mise à jour automatique](docs/MISE_A_JOUR_INSTALLATEUR.md).
 
-La V2.1.4 est la version stable actuelle. Les installateurs précédents la proposent automatiquement. Voir le [rapport d’audit V2.1.4](docs/AUDIT_TRADUCTION_V2.1.4.md).
+La V2.1.5 est la version stable actuelle. Les installateurs précédents la proposent automatiquement. Voir le [contrôle de compatibilité V2.1.5](docs/AUDIT_COMPATIBILITE_V2.1.5.md).
 
 ## Installation
 
-1. Télécharger `Guildrun_Demo_FR_Installer_V2.1.4.exe` depuis la page [Releases](https://github.com/W0rku/guildrun-french-translation/releases).
+1. Télécharger `Guildrun_Demo_FR_Installer_V2.1.5.exe` depuis la page [Releases](https://github.com/W0rku/guildrun-french-translation/releases).
 2. Fermer Guildrun.
 3. Lancer l’installateur, sélectionner le dossier du jeu et installer le français.
 
@@ -40,21 +40,23 @@ Au prochain lancement, choisir **French (fr)** dans les paramètres de langue si
 - Steam BuildID `24690909`
 - Guildrun Demo `0.5.5`, build `783`
 - Steam BuildID `24816645`
+- Guildrun Demo `0.5.6`, build `792`
+- Steam BuildID `24930839`
 - Windows x64 / Steam
 
 Une mise à jour de Guildrun peut modifier les fichiers contrôlés par l’installateur et nécessiter une nouvelle version du patch. Si la version est inconnue, l’installation est refusée sans modifier le jeu.
 
 ## Téléchargement et vérification
 
-La version stable est disponible dans les [Releases GitHub](https://github.com/W0rku/guildrun-french-translation/releases/tag/v2.1.4).
+La version stable est disponible dans les [Releases GitHub](https://github.com/W0rku/guildrun-french-translation/releases/tag/v2.1.5).
 
-**Guildrun_Demo_FR_Installer_V2.1.4.exe**
+**Guildrun_Demo_FR_Installer_V2.1.5.exe**
 
 ```text
-SHA-256  836EAC6990764C320801E30489A1DB97196BCB446F3CFA2D5066F88CCBA11731
+SHA-256  0A7E77CC25061EF777564B83349F62FA141542C7A13C8C83DE5621FE1C94D4DF
 ```
 
-La V2.1.4 a réussi **39/39 tests automatisés**, y compris la compatibilité avec les quatre BuildID, le routage des payloads par version, le refus sans écriture d’un hash English inconnu, les rollbacks transactionnels et la mise à jour automatique.
+La V2.1.5 a réussi **41/41 tests automatisés**, y compris la compatibilité avec les cinq BuildID, la reprise exacte d’une sauvegarde V2.1.4, la recréation transactionnelle de la préférence `fr`, le refus sans écriture d’un état inconnu, les rollbacks et la mise à jour automatique.
 
 ## Code source et fichiers du jeu
 

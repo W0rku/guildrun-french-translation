@@ -51,10 +51,11 @@ function Get-GuildrunV21Policy {
             BackupDirectoryName = 'sauvegarde-locale-24690909'
         },
         [pscustomobject]@{
-            Name = 'Steam-24816645'
-            SteamBuildId = '24816645'
-            GameVersion = '0.5.5'
-            GameBuild = 783
+            Name = 'Steam-24816645-24930839'
+            SteamBuildId = '24930839'
+            CompatibleSteamBuildIds = @('24816645', '24930839')
+            GameVersion = '0.5.6'
+            GameBuild = 792
             OriginalEnglishHash = 'CA2B6A9BCEFBC64D44FEFE5B10C5FA77419C5081095584B7B8516C0EC82811BE'
             OriginalCatalogHash = 'C48AAD223DB7A7DC3620CEBE29E8AF4C8F0B15990549B32A966DA48BF712F2BF'
             PreviousPatchedFrenchHash = $null
@@ -202,7 +203,7 @@ function Get-GuildrunV21State {
     }
 
     if ($matches.Count -ne 1) {
-        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.4 sont acceptes. Aucun fichier n'a ete modifie."
+        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.5 sont acceptes. Aucun fichier n'a ete modifie."
     }
 
     $selected = $matches[0]
@@ -531,10 +532,15 @@ function Assert-GuildrunOriginalPersistentBackup {
         [Parameter(Mandatory = $true)] $Profile
     )
 
+    $acceptedSteamBuildIds = if ($null -ne $Profile.PSObject.Properties['CompatibleSteamBuildIds']) {
+        @($Profile.CompatibleSteamBuildIds | ForEach-Object { [string]$_ })
+    }
+    else { @([string]$Profile.SteamBuildId) }
+
     if ($Backup.FrenchHash -ne $Policy.OriginalFrenchHash -or
         $Backup.LocalesHash -ne $Policy.OriginalLocalesHash -or
         $Backup.CatalogHash -ne $Profile.OriginalCatalogHash -or
-        [string]$Backup.Manifest.SteamBuildId -ne [string]$Profile.SteamBuildId) {
+        $acceptedSteamBuildIds -notcontains [string]$Backup.Manifest.SteamBuildId) {
         throw 'La sauvegarde locale existante ne correspond pas exactement aux fichiers officiels du profil. Installation refusee.'
     }
 }
