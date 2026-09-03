@@ -62,28 +62,46 @@ function Get-GuildrunV21Policy {
             PreviousPatchedCatalogHash = $null
             PatchedFrenchHash = '907B489269EFD5F359C456CA62EC9FB5C77621B8CCB17AE1122F64F9434D321B'
             PatchedCatalogHash = '0B47CD7DD74CDD840BABB1A5D4F696732F1116091C9035E53EB76D4488F5E28A'
-            PayloadFrenchName = 'localization-string-tables-french(fr)_assets_all.bundle'
+            PayloadFrenchName = 'localization-string-tables-french(fr)_assets_all.v214.bundle'
             PayloadCatalogName = 'catalog-24816645.bin'
             BackupDirectoryName = 'sauvegarde-locale-24816645'
+        },
+        [pscustomobject]@{
+            Name = 'Steam-25060342'
+            SteamBuildId = '25060342'
+            GameVersion = '0.5.7'
+            GameBuild = 814
+            OriginalEnglishHash = 'C5CF24D3B0A465F77DA89353998A87F5AEAA6A4B2F02BAD8F057AF39D65D472E'
+            OriginalCatalogHash = '80A47C9F8DC2CB85F7DAD8A25E48A9A9CC25397D3616CFB6F206398CD6C0762A'
+            PreviousPatchedFrenchHash = $null
+            PreviousPatchedCatalogHash = $null
+            SteamUpdatePreviousFrenchHash = '907B489269EFD5F359C456CA62EC9FB5C77621B8CCB17AE1122F64F9434D321B'
+            PreviousBackupDirectoryName = 'sauvegarde-locale-24816645'
+            PreviousBackupCatalogHash = 'C48AAD223DB7A7DC3620CEBE29E8AF4C8F0B15990549B32A966DA48BF712F2BF'
+            PatchedFrenchHash = '4066E7A564AEFE6EC0BBAD17304CF24BA3AA231FEE03E9BDE80A22AAAD1652D0'
+            PatchedCatalogHash = 'B12D4546931279DD5FABA2AF4F523B08D9AFB51B9245725EE12FE1FF4773F900'
+            PayloadFrenchName = 'localization-string-tables-french(fr)_assets_all.bundle'
+            PayloadCatalogName = 'catalog-25060342.bin'
+            BackupDirectoryName = 'sauvegarde-locale-25060342'
         }
     )
 
     [pscustomobject]@{
-        GameVersion          = $profiles[3].GameVersion
-        GameBuild            = $profiles[3].GameBuild
+        GameVersion          = $profiles[4].GameVersion
+        GameBuild            = $profiles[4].GameBuild
         EnglishBundleName    = 'localization-string-tables-english(en)_assets_all.bundle'
         FrenchBundleName     = 'localization-string-tables-french(fr)_assets_all.bundle'
         LocalesBundleName    = 'localization-locales_assets_all.bundle'
         CatalogName          = 'catalog.bin'
         OriginalExecutableHash = '33B701F9128366079EF47495259361A094D83DD293AB03B60870997B36D60882'
-        OriginalEnglishHash  = $profiles[3].OriginalEnglishHash
+        OriginalEnglishHash  = $profiles[4].OriginalEnglishHash
         OriginalFrenchHash   = 'C076AA88A443CC945992402D7DE40DCDFDC4DE27228745A37EC735E647C23A32'
         OriginalLocalesHash  = 'D4A2D1D0DC9773DFA75E07778EE90EF9F13252DE96DF2E1D72F4A8476E3BBDC7'
-        OriginalCatalogHash  = $profiles[3].OriginalCatalogHash
+        OriginalCatalogHash  = $profiles[4].OriginalCatalogHash
         PreviousPatchedFrenchHash = '67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E'
-        PatchedFrenchHash    = $profiles[3].PatchedFrenchHash
+        PatchedFrenchHash    = $profiles[4].PatchedFrenchHash
         PatchedLocalesHash   = 'D2885F99C6DB7495ABCF9D9F453AC0225AAFE80304FF29604BAB48ECE812AA9C'
-        PatchedCatalogHash   = $profiles[3].PatchedCatalogHash
+        PatchedCatalogHash   = $profiles[4].PatchedCatalogHash
         Profiles             = $profiles
     }
 }
@@ -112,7 +130,7 @@ function Get-GuildrunV21Paths {
         PayloadFrench   = Join-Path $resolvedPayloadRoot $Policy.FrenchBundleName
         PayloadLocales  = Join-Path $resolvedPayloadRoot $Policy.LocalesBundleName
         PayloadCatalog  = Join-Path $resolvedPayloadRoot $Policy.CatalogName
-        BackupRoot      = Join-Path $resolvedGameRoot 'Traduction_FR_V2.1\sauvegarde-locale-24816645'
+        BackupRoot      = Join-Path $resolvedGameRoot 'Traduction_FR_V2.1\sauvegarde-locale-25060342'
         TransactionRoot = Join-Path $resolvedGameRoot 'Traduction_FR_V2.1\.transactions'
     }
 }
@@ -196,14 +214,20 @@ function Get-GuildrunV21State {
             $hashes.French -eq $profile.PreviousPatchedFrenchHash -and
             $hashes.Locales -eq $Policy.PatchedLocalesHash -and
             $hashes.Catalog -eq $profile.PreviousPatchedCatalogHash
-        if ($isOriginal -or $isInstalled -or $isPreviousInstalled) {
-            $name = if ($isOriginal) { 'Original' } elseif ($isInstalled) { 'Installed' } else { 'PreviousInstalled' }
+        $hasSteamUpdatePrevious = $null -ne $profile.PSObject.Properties['SteamUpdatePreviousFrenchHash'] -and
+            -not [string]::IsNullOrWhiteSpace([string]$profile.SteamUpdatePreviousFrenchHash)
+        $isSteamUpdatePreviousInstalled = $hasSteamUpdatePrevious -and
+            $hashes.French -eq $profile.SteamUpdatePreviousFrenchHash -and
+            $hashes.Locales -eq $Policy.PatchedLocalesHash -and
+            $hashes.Catalog -eq $profile.OriginalCatalogHash
+        if ($isOriginal -or $isInstalled -or $isPreviousInstalled -or $isSteamUpdatePreviousInstalled) {
+            $name = if ($isOriginal) { 'Original' } elseif ($isInstalled) { 'Installed' } elseif ($isPreviousInstalled) { 'PreviousInstalled' } else { 'SteamUpdatedPreviousInstalled' }
             $matches += [pscustomobject]@{ Profile = $profile; Name = $name }
         }
     }
 
     if ($matches.Count -ne 1) {
-        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.5 sont acceptes. Aucun fichier n'a ete modifie."
+        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.6 sont acceptes. Aucun fichier n'a ete modifie."
     }
 
     $selected = $matches[0]
@@ -524,6 +548,65 @@ function New-GuildrunPersistentBackup {
     Read-GuildrunPersistentBackup -Paths $Paths
 }
 
+function New-GuildrunMigratedPersistentBackup {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)] $Paths,
+        [Parameter(Mandatory = $true)] $State,
+        [Parameter(Mandatory = $true)] $Policy,
+        [Parameter(Mandatory = $true)] $PreviousBackup
+    )
+
+    if (Test-Path -LiteralPath $Paths.BackupRoot) {
+        $existing = Read-GuildrunPersistentBackup -Paths $Paths
+        Assert-GuildrunOriginalPersistentBackup -Backup $existing -Policy $Policy -Profile $State.Profile
+        return $existing
+    }
+
+    if ($PreviousBackup.FrenchHash -ne $Policy.OriginalFrenchHash -or
+        $PreviousBackup.LocalesHash -ne $Policy.OriginalLocalesHash -or
+        $PreviousBackup.CatalogHash -ne $State.Profile.PreviousBackupCatalogHash) {
+        throw 'La sauvegarde precedente ne correspond pas exactement au profil officiel attendu.'
+    }
+    Assert-GuildrunHash -LiteralPath $Paths.Catalog -ExpectedHash $State.Profile.OriginalCatalogHash -Label 'Nouveau catalogue officiel avant migration' | Out-Null
+
+    $parent = Split-Path -Parent $Paths.BackupRoot
+    New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    $creating = Join-Path $parent ('.sauvegarde-migration-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $creating -Force | Out-Null
+    try {
+        $copies = @(
+            @($PreviousBackup.French, (Join-Path $creating 'localization-string-tables-french(fr)_assets_all.bundle.backup'), $Policy.OriginalFrenchHash),
+            @($PreviousBackup.Locales, (Join-Path $creating 'localization-locales_assets_all.bundle.backup'), $Policy.OriginalLocalesHash),
+            @($Paths.Catalog, (Join-Path $creating 'catalog.bin.backup'), $State.Profile.OriginalCatalogHash)
+        )
+        foreach ($copy in $copies) {
+            Copy-Item -LiteralPath $copy[0] -Destination $copy[1]
+            Assert-GuildrunHash -LiteralPath $copy[1] -ExpectedHash $copy[2] -Label 'Sauvegarde locale migree' | Out-Null
+        }
+        [pscustomobject]@{
+            FormatVersion = 4
+            GameVersion = $State.Profile.GameVersion
+            GameBuild = $State.Profile.GameBuild
+            SteamBuildId = $State.SteamBuildId
+            ProfileName = $State.Profile.Name
+            CreatedAtUtc = [DateTime]::UtcNow.ToString('o')
+            FrenchSha256 = $Policy.OriginalFrenchHash
+            LocalesSha256 = $Policy.OriginalLocalesHash
+            CatalogSha256 = $State.Profile.OriginalCatalogHash
+            LocalePreference = ConvertTo-GuildrunRegistryRecord $PreviousBackup.RegistryState
+        } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $creating 'manifest.json') -Encoding UTF8
+        Move-Item -LiteralPath $creating -Destination $Paths.BackupRoot
+    }
+    catch {
+        if (Test-Path -LiteralPath $creating) { Remove-Item -LiteralPath $creating -Recurse -Force }
+        throw
+    }
+    $created = Read-GuildrunPersistentBackup -Paths $Paths
+    Assert-GuildrunOriginalPersistentBackup -Backup $created -Policy $Policy -Profile $State.Profile
+    $created
+}
+
 function Assert-GuildrunOriginalPersistentBackup {
     [CmdletBinding()]
     param(
@@ -598,7 +681,16 @@ function Invoke-GuildrunV21Install {
     }
 
     $registryState = Get-GuildrunLocalePreferenceState -RegistryReader $RegistryReader
-    if ($state.Name -eq 'PreviousInstalled') {
+    if ($state.Name -eq 'SteamUpdatedPreviousInstalled') {
+        if ($null -eq $state.Profile.PSObject.Properties['PreviousBackupDirectoryName'] -or [string]::IsNullOrWhiteSpace([string]$state.Profile.PreviousBackupDirectoryName)) {
+            throw 'Profil de migration incomplet : sauvegarde precedente non declaree.'
+        }
+        $previousPaths = Get-GuildrunV21Paths -GameRoot $GameRoot -PayloadRoot $PayloadRoot -Policy $Policy
+        $previousPaths.BackupRoot = Join-Path $previousPaths.GameRoot (Join-Path 'Traduction_FR_V2.1' $state.Profile.PreviousBackupDirectoryName)
+        $previousBackup = Read-GuildrunPersistentBackup -Paths $previousPaths
+        New-GuildrunMigratedPersistentBackup -Paths $paths -State $state -Policy $Policy -PreviousBackup $previousBackup | Out-Null
+    }
+    elseif ($state.Name -eq 'PreviousInstalled') {
         $backup = Read-GuildrunPersistentBackup -Paths $paths
         Assert-GuildrunOriginalPersistentBackup -Backup $backup -Policy $Policy -Profile $state.Profile
     }
@@ -620,7 +712,7 @@ function Invoke-GuildrunV21Install {
         $expectedFrench = [pscustomobject]@{ Exists = $true; Kind = 'Binary'; Value = [byte[]](102, 114, 0) }
         Assert-GuildrunLocalePreferenceState -Expected $expectedFrench -RegistryReader $RegistryReader
         Invoke-GuildrunFailureHook -FailureInjector $FailureInjector -Stage 'AfterLocale'
-        [pscustomobject]@{ State = $(if ($state.Name -eq 'PreviousInstalled') { 'Upgraded' } else { 'Installed' }); BackupRoot = $paths.BackupRoot }
+        [pscustomobject]@{ State = $(if ($state.Name -in @('PreviousInstalled', 'SteamUpdatedPreviousInstalled')) { 'Upgraded' } else { 'Installed' }); BackupRoot = $paths.BackupRoot }
     }
     catch {
         $failure = $_

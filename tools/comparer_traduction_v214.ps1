@@ -89,6 +89,14 @@ foreach ($en in $english) {
 }
 
 Write-Host "English=$($english.Count) French=$($french.Count) Missing=$($missing.Count) Extra=$($extra.Count) StructuralMismatches=$($mismatches.Count)"
+foreach ($item in $missing) {
+    Write-Host "`nMISSING $($item.Key) INDEX=$($item.Index) SMART=$($item.Smart)"
+    Write-Host "EN: $($item.Text)"
+}
+foreach ($item in $extra) {
+    Write-Host "`nEXTRA $($item.Key) INDEX=$($item.Index) SMART=$($item.Smart)"
+    Write-Host "FR: $($item.Text)"
+}
 foreach ($item in $mismatches) {
     Write-Host "`nKEY $($item.Key)"
     Write-Host "ARGS EN=[$($item.EnglishArgs)] FR=[$($item.FrenchArgs)] SMART=$($item.Smart)"
@@ -102,7 +110,7 @@ if (-not [string]::IsNullOrWhiteSpace($SearchPattern)) {
     $matches = @($english | Where-Object { $_.Text -match $SearchPattern })
     foreach ($match in $matches) {
         $fr = $frenchMap[$match.Key]
-        Write-Host "`nKEY $($match.Key) INDEX=$($match.Index)"
+        Write-Host "`nKEY $($match.Key) INDEX=$($match.Index) SMART=$($match.Smart)"
         Write-Host "EN: $($match.Text)"
         if ($null -ne $fr) { Write-Host "FR: $($fr.Text)" }
     }

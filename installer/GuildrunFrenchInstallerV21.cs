@@ -9,8 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("2.1.5.0")]
-[assembly: AssemblyFileVersion("2.1.5.0")]
+[assembly: AssemblyVersion("2.1.6.0")]
+[assembly: AssemblyFileVersion("2.1.6.0")]
 
 namespace GuildrunFrenchInstallerV21
 {
@@ -429,7 +429,7 @@ namespace GuildrunFrenchInstallerV21
 
         public InstallerForm(string initialGameRoot)
         {
-            Text = "Guildrun - Français V2.1.5";
+            Text = "Guildrun - Français V2.1.6";
             ClientSize = new Size(1080, 700);
             MinimumSize = new Size(980, 700);
             StartPosition = FormStartPosition.CenterScreen;
@@ -476,7 +476,7 @@ namespace GuildrunFrenchInstallerV21
             Label heroSubtitle = CreateLabel("Installation locale et restauration incluse.", 272, 254, 390, 28, Theme.Muted, new Font("Segoe UI", 12F));
 
             AddFeature(48, 370, FeatureIconKind.Globe, "100% local", "Aucun fichier envoyé. Tout reste sur votre PC.");
-            AddFeature(48, 452, FeatureIconKind.Shield, "Sûr & vérifié", "3 919 textes contrôlés et validés.");
+            AddFeature(48, 452, FeatureIconKind.Shield, "Sûr & vérifié", "3 923 textes contrôlés et validés.");
             AddFeature(48, 534, FeatureIconKind.Restore, "Réversible", "Retire la traduction et restaure l’état précédent.");
 
             actionPanel = new RoundedPanel {
@@ -548,7 +548,7 @@ namespace GuildrunFrenchInstallerV21
                 BorderColor = Theme.BorderSoft, Radius = 11, Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             StatusCheck readyIcon = new StatusCheck { Left = 15, Top = 10, Width = 29, Height = 29 };
-            Label readyText = CreateLabel("3 919 textes prêts", 52, 12, 132, 26, Theme.Text, new Font("Segoe UI", 10F));
+            Label readyText = CreateLabel("3 923 textes prêts", 52, 12, 132, 26, Theme.Text, new Font("Segoe UI", 10F));
             readyBadge.Controls.AddRange(new Control[] { readyIcon, readyText });
             footer.Controls.AddRange(new Control[] { footerLine, footerShield, footerStatus, detailsButton, readyBadge });
 
@@ -875,6 +875,7 @@ namespace GuildrunFrenchInstallerV21
                 Extract("GuildrunFRV21.Install", Path.Combine(scripts, "installer_traduction.ps1"));
                 Extract("GuildrunFRV21.Restore", Path.Combine(scripts, "restaurer_sauvegarde.ps1"));
                 Extract("GuildrunFRV21.FrenchCurrent", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.bundle"));
+                Extract("GuildrunFRV21.FrenchV214", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.v214.bundle"));
                 Extract("GuildrunFRV21.FrenchV213", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.v213.bundle"));
                 Extract("GuildrunFRV21.FrenchLegacy", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.v212.bundle"));
                 Extract("GuildrunFRV21.Locales", Path.Combine(payload, "localization-locales_assets_all.bundle"));
@@ -882,6 +883,7 @@ namespace GuildrunFrenchInstallerV21
                 Extract("GuildrunFRV21.Catalog24613101", Path.Combine(payload, "catalog.bin"));
                 Extract("GuildrunFRV21.Catalog24690909", Path.Combine(payload, "catalog-24690909.bin"));
                 Extract("GuildrunFRV21.Catalog24816645", Path.Combine(payload, "catalog-24816645.bin"));
+                Extract("GuildrunFRV21.Catalog25060342", Path.Combine(payload, "catalog-25060342.bin"));
 
                 string script = Path.Combine(scripts, restore ? "restaurer_sauvegarde.ps1" : "installer_traduction.ps1");
                 ProcessStartInfo start = new ProcessStartInfo {

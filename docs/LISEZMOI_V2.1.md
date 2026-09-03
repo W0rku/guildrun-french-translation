@@ -1,8 +1,8 @@
-# Guildrun Demo — Traduction française V2.1.5
+# Guildrun Demo — Traduction française V2.1.6
 
-Cette révision cible **Guildrun Demo 0.5.3 build 748** à **0.5.6 build 792**. Elle reconnaît les Steam BuildID `24551494`, `24613101`, `24690909`, `24816645` et `24930839`, utilise le véritable Locale Unity `French (fr)` et ne remplace jamais le bundle anglais.
+Cette révision cible **Guildrun Demo 0.5.3 build 748** à **0.5.7 build 814**. Elle reconnaît les Steam BuildID `24551494`, `24613101`, `24690909`, `24816645`, `24930839` et `25060342`, utilise le véritable Locale Unity `French (fr)` et ne remplace jamais le bundle anglais.
 
-La V2.1.5 conserve exactement le payload V2.1.4 : la mise à jour 0.5.6 n’a modifié aucune table de langue. Elle ajoute le nouveau profil et réactive la préférence `fr` si Steam l’a supprimée. Les tables English et French contiennent chacune 3 919 clés, sans divergence.
+La V2.1.6 ajoute les quatre clés UI apparues en 0.5.7. Les tables English et French contiennent chacune 3 923 clés, sans divergence de Smart String, d’argument ou de balise.
 
 ## Mise à jour de l’installateur
 
@@ -34,7 +34,7 @@ Le bundle anglais est contrôlé avant et après l'opération, mais n'est jamais
 
 1. Vérification de `Guildrun.exe`, des trois fichiers officiels et du bundle anglais par SHA-256.
 2. Vérification des trois fichiers embarqués dans le payload.
-3. Refus immédiat d'une version inconnue ou d'un mélange officiel/patché, tout en reconnaissant une V2.1.1 complète comme source de mise à niveau.
+3. Refus immédiat d'une version inconnue ou d'un mélange officiel/patché non reconnu. L’état exact laissé par la mise à jour Steam 0.5.7 est accepté uniquement avec une sauvegarde V2.1.4 officielle validée.
 4. Capture de l'existence, du type et du contenu exact de `selected-locale_h3890535593`.
 5. Copie exacte des trois originaux dans la sauvegarde locale propre au profil, avec manifeste SHA-256, version/build et état antérieur de la préférence Unity.
 6. Création d'une sauvegarde transactionnelle temporaire des trois fichiers et de la préférence.
@@ -47,9 +47,11 @@ Lors d'une restauration manuelle, l'installateur remet la valeur, son type et so
 
 Lors d’une mise à niveau depuis V2.1.1, la sauvegarde locale originale n’est jamais réécrite. Un échec remet exactement le triplet V2.1.1 et sa préférence courante ; la restauration manuelle continue de remettre l’état officiel précédant la première installation.
 
+Lors d’une migration après la mise à jour Steam 0.5.7, la nouvelle sauvegarde combine les bundles French/Locales officiels validés de la sauvegarde V2.1.4 avec le nouveau `catalog.bin` officiel déjà présent. La préférence antérieure est conservée. L’installation est refusée si cette chaîne de confiance est incomplète.
+
 ## Utilisation
 
-- Interface graphique : exécuter `Installeur/Guildrun_Demo_FR_Installer_V2.1.5.exe` en administrateur.
+- Interface graphique : exécuter `Installeur/Guildrun_Demo_FR_Installer_V2.1.6.exe` en administrateur.
 - Script : `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\installer_traduction.ps1`
 - Restauration : `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restaurer_sauvegarde.ps1`
 
@@ -66,7 +68,7 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 ## Test manuel dans le jeu
 
 1. Confirmer que la build affichée est l’une des versions compatibles documentées.
-2. Lancer l'installateur V2.1.5 et sélectionner le dossier contenant `Guildrun.exe`.
+2. Lancer l'installateur V2.1.6 et sélectionner le dossier contenant `Guildrun.exe`.
 3. Cliquer sur **Installer la V2.1** et attendre le message de réussite.
 4. Lancer le jeu normalement, sans `-language=en`.
 5. Ouvrir Settings > Language : `French (fr)` doit apparaître et `Japanese (ja)` doit rester absent.
@@ -74,4 +76,4 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 7. Fermer et relancer le jeu : le Locale français doit rester sélectionné.
 8. Quitter le jeu, utiliser **Restaurer** pour remettre l’état précédent, puis vérifier avec Steam si l'on souhaite confirmer le retour exact aux fichiers officiels.
 
-La V2.1.5 stable a réussi 41/41 tests automatisés. Les installateurs antérieurs détectent automatiquement cette Release stable et affichent le bouton **Mettre à jour**.
+La V2.1.6 stable a réussi 42/42 tests automatisés. Les installateurs antérieurs détectent automatiquement cette Release stable et affichent le bouton **Mettre à jour**.

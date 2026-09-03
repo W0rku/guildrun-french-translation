@@ -15,15 +15,18 @@ $officialCatalogLegacyHash = 'DC16E4280C5FAD3526AEC223B3C41F9A46B519D3EED96E1364
 $officialCatalogCurrentHash = '1E436E183F5CC451943F090AD2166B56D592EEBDB75C0D2AD210EEF7FDB26E85'
 $officialCatalogV213Hash = '647051CA4D8AAF4ED9E2BB13674E690333C689D9743F88D0DFB4DE3097FA820C'
 $officialCatalogV214Hash = 'C48AAD223DB7A7DC3620CEBE29E8AF4C8F0B15990549B32A966DA48BF712F2BF'
+$officialCatalogV216Hash = '80A47C9F8DC2CB85F7DAD8A25E48A9A9CC25397D3616CFB6F206398CD6C0762A'
 $baselineFrenchHash = '67FF94F910B89A8B625E4D4D2398D189114FC1368FFD5C35C5948E980A905E2E'
 $expectedFrenchLegacyHash = '7C8D467B719EEEE955C0226248EC90004277842B5017436607E7A01EAE388305'
 $expectedFrenchV213Hash = '07995AA60F88CCAE1FDE1FA375819099906BC0EBCAA0B424358637D00AADDE73'
 $expectedFrenchV214Hash = '907B489269EFD5F359C456CA62EC9FB5C77621B8CCB17AE1122F64F9434D321B'
+$expectedFrenchV216Hash = '4066E7A564AEFE6EC0BBAD17304CF24BA3AA231FEE03E9BDE80A22AAAD1652D0'
 $expectedLocalesHash = 'D2885F99C6DB7495ABCF9D9F453AC0225AAFE80304FF29604BAB48ECE812AA9C'
 $expectedCatalogLegacyHash = '44BC589D21336E54170B5F39702BFAE8E07B971AB573B1459BD09008D6D97232'
 $expectedCatalogCurrentHash = '7B78213D5C73446074C59F223BAE05199D7C65ABB6F7CA77484AA7BE33657A71'
 $expectedCatalogV213Hash = '1A6271C3E89DC351D3780BB3A84BD6CE793AA4DB9E75F98F5E377B5E9AED6203'
 $expectedCatalogV214Hash = '0B47CD7DD74CDD840BABB1A5D4F696732F1116091C9035E53EB76D4488F5E28A'
+$expectedCatalogV216Hash = 'B12D4546931279DD5FABA2AF4F523B08D9AFB51B9245725EE12FE1FF4773F900'
 $frenchPathId = [long]996707670718014713
 
 function Assert-Hash([string] $Path, [string] $Expected, [string] $Label) {
@@ -64,24 +67,29 @@ $sourceCatalogLegacy = Join-Path $SourcesRoot 'catalog.bin.official'
 $sourceCatalogCurrent = Join-Path $SourcesRoot 'catalog-24613101.bin.official'
 $sourceCatalogV213 = Join-Path $SourcesRoot 'catalog-24690909.bin.official'
 $sourceCatalogV214 = Join-Path $SourcesRoot 'catalog-24816645.bin.official'
+$sourceCatalogV216 = Join-Path $SourcesRoot 'catalog-25060342.bin.official'
 $sourceFrench = Join-Path $SourcesRoot 'localization-string-tables-french(fr)_assets_all.v211.bundle'
 $correctionsLegacyPath = Join-Path $projectRoot 'translations\corrections-v2.1.2.fr.json'
 $correctionsV213Path = Join-Path $projectRoot 'translations\corrections-v2.1.3.fr.json'
 $correctionsV214Path = Join-Path $projectRoot 'translations\corrections-v2.1.4.fr.json'
+$correctionsV216Path = Join-Path $projectRoot 'translations\corrections-v2.1.6.fr.json'
 $legacyFrenchPayload = Join-Path $PayloadRoot 'localization-string-tables-french(fr)_assets_all.v212.bundle'
 $v213FrenchPayload = Join-Path $PayloadRoot 'localization-string-tables-french(fr)_assets_all.v213.bundle'
+$v214FrenchPayload = Join-Path $PayloadRoot 'localization-string-tables-french(fr)_assets_all.v214.bundle'
 $frenchPayload = Join-Path $PayloadRoot 'localization-string-tables-french(fr)_assets_all.bundle'
 $localesOutput = Join-Path $PayloadRoot 'localization-locales_assets_all.bundle'
 $catalogOutputLegacy = Join-Path $PayloadRoot 'catalog-24551494.bin'
 $catalogOutputCurrent = Join-Path $PayloadRoot 'catalog.bin'
 $catalogOutputV213 = Join-Path $PayloadRoot 'catalog-24690909.bin'
 $catalogOutputV214 = Join-Path $PayloadRoot 'catalog-24816645.bin'
+$catalogOutputV216 = Join-Path $PayloadRoot 'catalog-25060342.bin'
 
 Assert-Hash $sourceLocales $officialLocalesHash 'Bundle Locales officiel'
 Assert-Hash $sourceCatalogLegacy $officialCatalogLegacyHash 'Catalog officiel BuildID 24551494'
 Assert-Hash $sourceCatalogCurrent $officialCatalogCurrentHash 'Catalog officiel BuildID 24613101'
 Assert-Hash $sourceCatalogV213 $officialCatalogV213Hash 'Catalog officiel BuildID 24690909'
 Assert-Hash $sourceCatalogV214 $officialCatalogV214Hash 'Catalog officiel BuildID 24816645'
+Assert-Hash $sourceCatalogV216 $officialCatalogV216Hash 'Catalog officiel BuildID 25060342'
 Assert-Hash $sourceFrench $baselineFrenchHash 'Bundle French traduit V2.1.1 de reference'
 Assert-Hash $AssetsToolsDll '8D3CF02A877B0FA0363C7AA5AEDE18B8C1023519632F5E7EAC19AD084C743B34' 'AssetsTools.NET 3.0.5'
 [void][Reflection.Assembly]::LoadFrom([IO.Path]::GetFullPath($AssetsToolsDll))
@@ -136,7 +144,7 @@ function New-CorrectedFrenchBundle(
 
             $additions = @($requested.GetEnumerator() | Where-Object {
                 $_.Value.table -eq $tableName -and [bool]$_.Value.add
-            })
+            } | Sort-Object { [uint64][string]$_.Value.id })
             foreach ($addition in $additions) {
                 $templateId = [uint64][string]$addition.Value.smartTemplateId
                 $template = $entries.Children | Where-Object { $_.Get('m_Id').AsULong -eq $templateId } | Select-Object -First 1
@@ -182,11 +190,13 @@ New-CorrectedFrenchBundle $sourceFrench $legacyFrenchPayload $correctionsLegacyP
 Assert-Hash $legacyFrenchPayload $expectedFrenchLegacyHash 'Bundle French traduit V2.1.2 reconstruit'
 New-CorrectedFrenchBundle $legacyFrenchPayload $v213FrenchPayload $correctionsV213Path '2.1.3' 11
 Assert-Hash $v213FrenchPayload $expectedFrenchV213Hash 'Bundle French traduit V2.1.3 reconstruit'
-New-CorrectedFrenchBundle $v213FrenchPayload $frenchPayload $correctionsV214Path '2.1.4' 7
-if ($expectedFrenchV214Hash -eq 'TO_BE_COMPUTED') {
-    throw "HASH_FRENCH_V214=$((Get-FileHash -Algorithm SHA256 -LiteralPath $frenchPayload).Hash)"
+New-CorrectedFrenchBundle $v213FrenchPayload $v214FrenchPayload $correctionsV214Path '2.1.4' 7
+Assert-Hash $v214FrenchPayload $expectedFrenchV214Hash 'Bundle French traduit V2.1.4 reconstruit'
+New-CorrectedFrenchBundle $v214FrenchPayload $frenchPayload $correctionsV216Path '2.1.6' 4
+if ($expectedFrenchV216Hash -eq 'TO_BE_COMPUTED') {
+    throw "HASH_FRENCH_V216=$((Get-FileHash -Algorithm SHA256 -LiteralPath $frenchPayload).Hash)"
 }
-Assert-Hash $frenchPayload $expectedFrenchV214Hash 'Bundle French traduit V2.1.4 reconstruit'
+Assert-Hash $frenchPayload $expectedFrenchV216Hash 'Bundle French traduit V2.1.6 reconstruit'
 
 $temporaryBundle = $localesOutput + '.uncompressed.tmp'
 try {
@@ -276,11 +286,20 @@ if ($expectedCatalogV214Hash -eq 'TO_BE_COMPUTED') {
     [IO.File]::WriteAllBytes([IO.Path]::GetFullPath($catalogOutputV214), $catalog)
     throw "HASH_CATALOG_V214=$((Get-FileHash -Algorithm SHA256 -LiteralPath $catalogOutputV214).Hash)"
 }
-New-PatchedCatalog $sourceCatalogV214 $catalogOutputV214 $expectedCatalogV214Hash '24816645' $frenchPayload
+New-PatchedCatalog $sourceCatalogV214 $catalogOutputV214 $expectedCatalogV214Hash '24816645' $v214FrenchPayload
+if ($expectedCatalogV216Hash -eq 'TO_BE_COMPUTED') {
+    $catalog = [IO.File]::ReadAllBytes([IO.Path]::GetFullPath($sourceCatalogV216))
+    [BitConverter]::GetBytes((Get-BundleInternalCrc $localesOutput)).CopyTo($catalog, 4723)
+    [BitConverter]::GetBytes((Get-BundleInternalCrc $frenchPayload)).CopyTo($catalog, 6143)
+    [IO.File]::WriteAllBytes([IO.Path]::GetFullPath($catalogOutputV216), $catalog)
+    throw "HASH_CATALOG_V216=$((Get-FileHash -Algorithm SHA256 -LiteralPath $catalogOutputV216).Hash)"
+}
+New-PatchedCatalog $sourceCatalogV216 $catalogOutputV216 $expectedCatalogV216Hash '25060342' $frenchPayload
 
-Write-Host 'Payload V2.1.4 reconstruit et verifie.'
+Write-Host 'Payload V2.1.6 reconstruit et verifie.'
 Write-Host 'French V2.1.2 conserve pour les deux profils Guildrun 0.5.3.'
 Write-Host 'French V2.1.3 : 11 textes adaptes a Guildrun 0.5.4.'
 Write-Host 'French V2.1.4 : 7 textes adaptes a Guildrun 0.5.5.'
+Write-Host 'French V2.1.6 : 4 nouvelles cles UI adaptees a Guildrun 0.5.7.'
 Write-Host 'French PathID 996707670718014713 : Comment=EDITOR supprime.'
-Write-Host 'Catalogues 24551494, 24613101, 24690909 et 24816645 : octets 4723-4726 (Locales) et 6143-6146 (French) uniquement.'
+Write-Host 'Catalogues 24551494, 24613101, 24690909, 24816645 et 25060342 : octets 4723-4726 (Locales) et 6143-6146 (French) uniquement.'

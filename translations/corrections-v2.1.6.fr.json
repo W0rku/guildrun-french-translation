@@ -1,0 +1,34 @@
+{
+  "version": "2.1.6",
+  "baselineSha256": "907B489269EFD5F359C456CA62EC9FB5C77621B8CCB17AE1122F64F9434D321B",
+  "corrections": [
+    {
+      "table": "UI",
+      "id": "95887992982994944",
+      "text": "Victoires totales : {0}",
+      "add": true,
+      "smartTemplateId": "4757517696221185"
+    },
+    {
+      "table": "UI",
+      "id": "95887993016549376",
+      "text": "Meilleure série : {0}",
+      "add": true,
+      "smartTemplateId": "4757517696221185"
+    },
+    {
+      "table": "UI",
+      "id": "95887993033326592",
+      "text": "Meilleure série",
+      "add": true,
+      "smartTemplateId": "4757517696221192"
+    },
+    {
+      "table": "UI",
+      "id": "95887993033326593",
+      "text": "Victoires totales",
+      "add": true,
+      "smartTemplateId": "4757517696221192"
+    }
+  ]
+}

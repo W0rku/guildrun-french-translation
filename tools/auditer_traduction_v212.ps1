@@ -6,7 +6,8 @@ param(
     [string] $AssetsToolsDll,
     [string] $CorrectionsFile,
     [string] $ExpectedVersion = '2.1.2',
-    [int] $ExpectedCorrections = 10
+    [int] $ExpectedCorrections = 10,
+    [int] $ExpectedEntries = 3919
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,8 +82,8 @@ Assert-Audit (@($definition.corrections).Count -eq $ExpectedCorrections) "Nombre
 $declared = @{}
 foreach ($correction in $definition.corrections) { $declared["$($correction.table):$($correction.id)"] = [string]$correction.text }
 
-Assert-Audit ($english.Count -eq 3919) "Nombre de cles English inattendu : $($english.Count)."
-Assert-Audit ($french.Count -eq 3919) "Nombre de cles French inattendu : $($french.Count)."
+Assert-Audit ($english.Count -eq $ExpectedEntries) "Nombre de cles English inattendu : $($english.Count)."
+Assert-Audit ($french.Count -eq $ExpectedEntries) "Nombre de cles French inattendu : $($french.Count)."
 $missing = @($english.Keys | Where-Object { -not $french.ContainsKey($_) })
 $extra = @($french.Keys | Where-Object { -not $english.ContainsKey($_) })
 Assert-Audit ($missing.Count -eq 0 -and $extra.Count -eq 0) "Ecart de cles : $($missing.Count) manquante(s), $($extra.Count) supplementaire(s)."
