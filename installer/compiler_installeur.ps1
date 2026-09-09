@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 $installerRoot = $PSScriptRoot
 $v21Root = Split-Path -Parent $installerRoot
 $csc = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.6.exe'
+$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.7.exe'
 $source = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.cs'
 $updateSource = Join-Path $installerRoot 'InstallerUpdateService.cs'
 $manifest = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.manifest'
@@ -30,7 +30,10 @@ foreach ($required in @($csc, $source, $updateSource, $manifest, $common, $insta
 . $common
 $policy = Get-GuildrunV21Policy
 function Get-BuildProfile([string] $SteamBuildId) {
-    $matches = @($policy.Profiles | Where-Object { $_.SteamBuildId -eq $SteamBuildId })
+    $matches = @($policy.Profiles | Where-Object {
+        $_.SteamBuildId -eq $SteamBuildId -or
+        ($null -ne $_.PSObject.Properties['CompatibleSteamBuildIds'] -and @($_.CompatibleSteamBuildIds) -contains $SteamBuildId)
+    })
     if ($matches.Count -ne 1) { throw "Profil Steam BuildID $SteamBuildId absent ou ambigu dans la politique V2.1." }
     return $matches[0]
 }
@@ -39,19 +42,19 @@ $profile24551494 = Get-BuildProfile '24551494'
 $profile24613101 = Get-BuildProfile '24613101'
 $profile24690909 = Get-BuildProfile '24690909'
 $profile24930839 = Get-BuildProfile '24930839'
-$profile25060342 = Get-BuildProfile '25060342'
+$profile25119884 = Get-BuildProfile '25119884'
 
 $expectedNames = @(
     [pscustomobject]@{ Actual = $profile24551494.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.v212.bundle'; Label = 'French BuildID 24551494' }
     [pscustomobject]@{ Actual = $profile24613101.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.v212.bundle'; Label = 'French BuildID 24613101' }
     [pscustomobject]@{ Actual = $profile24690909.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.v213.bundle'; Label = 'French BuildID 24690909' }
     [pscustomobject]@{ Actual = $profile24930839.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.v214.bundle'; Label = 'French BuildID 24930839' }
-    [pscustomobject]@{ Actual = $profile25060342.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.bundle'; Label = 'French BuildID 25060342' }
+    [pscustomobject]@{ Actual = $profile25119884.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.bundle'; Label = 'French BuildID 25119884' }
     [pscustomobject]@{ Actual = $profile24551494.PayloadCatalogName; Expected = 'catalog-24551494.bin'; Label = 'catalogue BuildID 24551494' }
     [pscustomobject]@{ Actual = $profile24613101.PayloadCatalogName; Expected = 'catalog.bin'; Label = 'catalogue BuildID 24613101' }
     [pscustomobject]@{ Actual = $profile24690909.PayloadCatalogName; Expected = 'catalog-24690909.bin'; Label = 'catalogue BuildID 24690909' }
     [pscustomobject]@{ Actual = $profile24930839.PayloadCatalogName; Expected = 'catalog-24816645.bin'; Label = 'catalogue BuildID 24930839' }
-    [pscustomobject]@{ Actual = $profile25060342.PayloadCatalogName; Expected = 'catalog-25060342.bin'; Label = 'catalogue BuildID 25060342' }
+    [pscustomobject]@{ Actual = $profile25119884.PayloadCatalogName; Expected = 'catalog-25060342.bin'; Label = 'catalogue BuildID 25119884' }
 )
 foreach ($entry in $expectedNames) {
     if ($entry.Actual -ne $entry.Expected) { throw "Nom de payload inattendu pour $($entry.Label) : $($entry.Actual)" }
@@ -64,13 +67,13 @@ $expected = @{
     $frenchLegacy = $profile24551494.PatchedFrenchHash
     $frenchV213 = $profile24690909.PatchedFrenchHash
     $frenchV214 = $profile24930839.PatchedFrenchHash
-    $frenchCurrent = $profile25060342.PatchedFrenchHash
+    $frenchCurrent = $profile25119884.PatchedFrenchHash
     $locales = $policy.PatchedLocalesHash
     $catalog24551494 = $profile24551494.PatchedCatalogHash
     $catalog24613101 = $profile24613101.PatchedCatalogHash
     $catalog24690909 = $profile24690909.PatchedCatalogHash
     $catalog24816645 = $profile24930839.PatchedCatalogHash
-    $catalog25060342 = $profile25060342.PatchedCatalogHash
+    $catalog25060342 = $profile25119884.PatchedCatalogHash
 }
 foreach ($entry in $expected.GetEnumerator()) {
     if ((Get-FileHash -Algorithm SHA256 -LiteralPath $entry.Key).Hash -ne $entry.Value) { throw "Charge utile V2.1 invalide : $($entry.Key)" }
@@ -97,5 +100,5 @@ $arguments = @(
 )
 & $csc $arguments
 if ($LASTEXITCODE -ne 0) { throw "Compilation echouee avec le code $LASTEXITCODE." }
-Write-Host "Installateur V2.1.6 multi-BuildID compile : $output"
+Write-Host "Installateur V2.1.7 multi-BuildID compile : $output"
 Write-Host "SHA-256 : $((Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash)"

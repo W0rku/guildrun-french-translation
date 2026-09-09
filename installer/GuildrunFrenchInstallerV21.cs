@@ -9,8 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("2.1.6.0")]
-[assembly: AssemblyFileVersion("2.1.6.0")]
+[assembly: AssemblyVersion("2.1.7.0")]
+[assembly: AssemblyFileVersion("2.1.7.0")]
 
 namespace GuildrunFrenchInstallerV21
 {
@@ -429,7 +429,7 @@ namespace GuildrunFrenchInstallerV21
 
         public InstallerForm(string initialGameRoot)
         {
-            Text = "Guildrun - Français V2.1.6";
+            Text = "Guildrun - Français V2.1.7";
             ClientSize = new Size(1080, 700);
             MinimumSize = new Size(980, 700);
             StartPosition = FormStartPosition.CenterScreen;
