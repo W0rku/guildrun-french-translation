@@ -5,13 +5,15 @@ $ErrorActionPreference = 'Stop'
 $installerRoot = $PSScriptRoot
 $v21Root = Split-Path -Parent $installerRoot
 $csc = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.7.exe'
+$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.8.exe'
 $source = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.cs'
 $updateSource = Join-Path $installerRoot 'InstallerUpdateService.cs'
 $manifest = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.manifest'
 $common = Join-Path $v21Root 'scripts\GuildrunV21.Common.ps1'
 $install = Join-Path $v21Root 'scripts\installer_traduction.ps1'
 $restore = Join-Path $v21Root 'scripts\restaurer_sauvegarde.ps1'
+$frenchV218 = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.v218.bundle'
+$catalog25323618 = Join-Path $v21Root 'payload\catalog-25323618.bin'
 $frenchCurrent = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.bundle'
 $frenchV213 = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.v213.bundle'
 $frenchV214 = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.v214.bundle'
@@ -23,7 +25,7 @@ $catalog24690909 = Join-Path $v21Root 'payload\catalog-24690909.bin'
 $catalog24816645 = Join-Path $v21Root 'payload\catalog-24816645.bin'
 $catalog25060342 = Join-Path $v21Root 'payload\catalog-25060342.bin'
 
-foreach ($required in @($csc, $source, $updateSource, $manifest, $common, $install, $restore, $frenchCurrent, $frenchV214, $frenchV213, $frenchLegacy, $locales, $catalog24551494, $catalog24613101, $catalog24690909, $catalog24816645, $catalog25060342)) {
+foreach ($required in @($frenchV218, $catalog25323618, $csc, $source, $updateSource, $manifest, $common, $install, $restore, $frenchCurrent, $frenchV214, $frenchV213, $frenchLegacy, $locales, $catalog24551494, $catalog24613101, $catalog24690909, $catalog24816645, $catalog25060342)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Fichier requis introuvable : $required" }
 }
 
@@ -43,6 +45,7 @@ $profile24613101 = Get-BuildProfile '24613101'
 $profile24690909 = Get-BuildProfile '24690909'
 $profile24930839 = Get-BuildProfile '24930839'
 $profile25119884 = Get-BuildProfile '25119884'
+$profile25323618 = Get-BuildProfile '25323618'
 
 $expectedNames = @(
     [pscustomobject]@{ Actual = $profile24551494.PayloadFrenchName; Expected = 'localization-string-tables-french(fr)_assets_all.v212.bundle'; Label = 'French BuildID 24551494' }
@@ -64,6 +67,8 @@ if ($profile24551494.PatchedFrenchHash -ne $profile24613101.PatchedFrenchHash) {
 }
 
 $expected = @{
+    $frenchV218 = $profile25323618.PatchedFrenchHash
+    $catalog25323618 = $profile25323618.PatchedCatalogHash
     $frenchLegacy = $profile24551494.PatchedFrenchHash
     $frenchV213 = $profile24690909.PatchedFrenchHash
     $frenchV214 = $profile24930839.PatchedFrenchHash
@@ -86,6 +91,8 @@ $arguments = @(
     "/resource:$common,GuildrunFRV21.Common",
     "/resource:$install,GuildrunFRV21.Install",
     "/resource:$restore,GuildrunFRV21.Restore",
+    "/resource:$frenchV218,GuildrunFRV21.FrenchV218",
+    "/resource:$catalog25323618,GuildrunFRV21.Catalog25323618",
     "/resource:$frenchCurrent,GuildrunFRV21.FrenchCurrent",
     "/resource:$frenchV214,GuildrunFRV21.FrenchV214",
     "/resource:$frenchV213,GuildrunFRV21.FrenchV213",
@@ -100,5 +107,5 @@ $arguments = @(
 )
 & $csc $arguments
 if ($LASTEXITCODE -ne 0) { throw "Compilation echouee avec le code $LASTEXITCODE." }
-Write-Host "Installateur V2.1.7 multi-BuildID compile : $output"
+Write-Host "Installateur V2.1.8 multi-BuildID compile : $output"
 Write-Host "SHA-256 : $((Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash)"

@@ -1,8 +1,8 @@
-# Guildrun Demo — Traduction française V2.1.7
+# Guildrun Demo — Traduction française V2.1.8
 
-Cette révision cible **Guildrun Demo 0.5.3 build 748** à **0.5.7 build 824**. Elle reconnaît les Steam BuildID `24551494`, `24613101`, `24690909`, `24816645`, `24930839`, `25060342` et `25119884`, utilise le véritable Locale Unity `French (fr)` et ne remplace jamais le bundle anglais.
+Cette révision cible **Guildrun Demo 0.5.3 build 748** à **0.5.9 build 842**. Elle reconnaît les Steam BuildID `24551494`, `24613101`, `24690909`, `24816645`, `24930839`, `25060342` `25119884` et `25323618`, utilise le véritable Locale Unity `French (fr)` et ne remplace jamais le bundle anglais.
 
-La V2.1.7 conserve exactement les tables et payloads V2.1.6. Les tables English et French contiennent chacune 3 923 clés, sans divergence de Smart String, d’argument ou de balise. Le nouveau profil prend en charge le BuildID 25119884 et la disparition de la préférence `fr` après mise à jour Steam.
+La V2.1.8 conserve les anciens profils et adapte une description de relique pour 0.5.9, avec un catalogue reconstruit depuis l’original 25323618. Les tables English et French contiennent chacune 3 923 clés, sans divergence de Smart String, d’argument ou de balise. Le nouveau profil prend en charge le BuildID 25323618 et la disparition de la préférence `fr` après mise à jour Steam.
 
 ## Mise à jour de l’installateur
 
@@ -47,18 +47,18 @@ Lors d'une restauration manuelle, l'installateur remet la valeur, son type et so
 
 Lors d’une mise à niveau depuis V2.1.1, la sauvegarde locale originale n’est jamais réécrite. Un échec remet exactement le triplet V2.1.1 et sa préférence courante ; la restauration manuelle continue de remettre l’état officiel précédant la première installation.
 
-Lors d’une migration après la mise à jour Steam 0.5.7, l’installateur valide la sauvegarde V2.1.4 ou V2.1.6 correspondante. Il conserve la préférence antérieure et le nouveau `catalog.bin` officiel. L’installation est refusée si cette chaîne de confiance est incomplète.
+Lors d’une migration après la mise à jour Steam 0.5.9, l’installateur valide la sauvegarde V2.1.4 ou V2.1.6 correspondante. Il conserve la préférence antérieure et le nouveau `catalog.bin` officiel. L’installation est refusée si cette chaîne de confiance est incomplète.
 
 ## Utilisation
 
-- Interface graphique : exécuter `Installeur/Guildrun_Demo_FR_Installer_V2.1.7.exe` en administrateur.
+- Interface graphique : exécuter `Installeur/Guildrun_Demo_FR_Installer_V2.1.8.exe` en administrateur.
 - Script : `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\installer_traduction.ps1`
 - Restauration : `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restaurer_sauvegarde.ps1`
 
 ## Reconstruction et tests
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\reconstruire_payload_v21.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\reconstruire_payload_v218.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Run-Tests.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Installeur\compiler_installeur.ps1
 ```
@@ -68,7 +68,7 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 ## Test manuel dans le jeu
 
 1. Confirmer que la build affichée est l’une des versions compatibles documentées.
-2. Lancer l'installateur V2.1.7 et sélectionner le dossier contenant `Guildrun.exe`.
+2. Lancer l'installateur V2.1.8 et sélectionner le dossier contenant `Guildrun.exe`.
 3. Cliquer sur **Installer la V2.1** et attendre le message de réussite.
 4. Lancer le jeu normalement, sans `-language=en`.
 5. Ouvrir Settings > Language : `French (fr)` doit apparaître et `Japanese (ja)` doit rester absent.
@@ -76,4 +76,4 @@ La bibliothèque `AssetsTools.NET.dll` sert uniquement à reconstruire et inspec
 7. Fermer et relancer le jeu : le Locale français doit rester sélectionné.
 8. Quitter le jeu, utiliser **Restaurer** pour remettre l’état précédent, puis vérifier avec Steam si l'on souhaite confirmer le retour exact aux fichiers officiels.
 
-La V2.1.7 stable a réussi 43/43 tests automatisés. Les installateurs antérieurs détectent automatiquement cette Release stable et affichent le bouton **Mettre à jour**.
+La V2.1.8 stable a réussi 46/46 tests automatisés. Les installateurs antérieurs détectent automatiquement cette Release stable et affichent le bouton **Mettre à jour**.

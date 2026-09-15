@@ -9,8 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-[assembly: AssemblyVersion("2.1.7.0")]
-[assembly: AssemblyFileVersion("2.1.7.0")]
+[assembly: AssemblyVersion("2.1.8.0")]
+[assembly: AssemblyFileVersion("2.1.8.0")]
 
 namespace GuildrunFrenchInstallerV21
 {
@@ -429,7 +429,7 @@ namespace GuildrunFrenchInstallerV21
 
         public InstallerForm(string initialGameRoot)
         {
-            Text = "Guildrun - Français V2.1.7";
+            Text = "Guildrun - Français V2.1.8";
             ClientSize = new Size(1080, 700);
             MinimumSize = new Size(980, 700);
             StartPosition = FormStartPosition.CenterScreen;
@@ -874,6 +874,8 @@ namespace GuildrunFrenchInstallerV21
                 Extract("GuildrunFRV21.Common", Path.Combine(scripts, "GuildrunV21.Common.ps1"));
                 Extract("GuildrunFRV21.Install", Path.Combine(scripts, "installer_traduction.ps1"));
                 Extract("GuildrunFRV21.Restore", Path.Combine(scripts, "restaurer_sauvegarde.ps1"));
+                Extract("GuildrunFRV21.FrenchV218", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.v218.bundle"));
+                Extract("GuildrunFRV21.Catalog25323618", Path.Combine(payload, "catalog-25323618.bin"));
                 Extract("GuildrunFRV21.FrenchCurrent", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.bundle"));
                 Extract("GuildrunFRV21.FrenchV214", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.v214.bundle"));
                 Extract("GuildrunFRV21.FrenchV213", Path.Combine(payload, "localization-string-tables-french(fr)_assets_all.v213.bundle"));

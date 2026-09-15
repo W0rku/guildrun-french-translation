@@ -19,3 +19,6 @@ Guildrun 0.5.7 build 824 (Steam BuildID 25119884) conserve exactement les mêmes
 La reconstruction French utilise aussi les baselines traduites V2.1.1 à V2.1.4, conservées uniquement en local.
 
 Le script `tools/reconstruire_payload_v21.ps1` refuse tous ces fichiers si leur SHA-256 diffère des valeurs documentées. Il applique uniquement les corrections déclarées dans les manifestes `translations/corrections-v2.1.2.fr.json` à `translations/corrections-v2.1.6.fr.json`. Les sources officielles, les baselines propriétaires et le payload restent exclus du dépôt ; le bundle Locales est inchangé et les catalogues restent propres à chaque profil.
+
+
+Guildrun 0.5.9 build 842 (Steam BuildID 25323618) utilise un nouvel English et `catalog-25323618.bin.official`. Le script `tools/reconstruire_payload_v218.ps1` valide la source officielle, reconstruit les profils antérieurs puis applique uniquement `translations/corrections-v2.1.8.fr.json` au French V2.1.6. Il modifie uniquement les deux CRC nécessaires dans le nouveau catalogue. Aucun fichier propriétaire n’est ajouté à Git.

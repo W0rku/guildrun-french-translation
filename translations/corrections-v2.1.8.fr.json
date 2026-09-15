@@ -1,0 +1,11 @@
+{
+  "version": "2.1.8",
+  "baselineSha256": "4066E7A564AEFE6EC0BBAD17304CF24BA3AA231FEE03E9BDE80A22AAAD1652D0",
+  "corrections": [
+    {
+      "table": "Relics",
+      "id": "21745596575236113",
+      "text": "Au [début du combat,]<bold> les [Assassins]<assassin> gagnent [Furtivité]<stealth> pendant {0} secondes.\n\nPendant [Ruée ({1}),]<rush> les [Assassins]<assassin> gagnent [{2} Critique]<crit>."
+    }
+  ]
+}
