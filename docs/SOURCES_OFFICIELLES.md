@@ -22,3 +22,6 @@ Le script `tools/reconstruire_payload_v21.ps1` refuse tous ces fichiers si leur 
 
 
 Guildrun 0.5.9 build 842 (Steam BuildID 25323618) utilise un nouvel English et `catalog-25323618.bin.official`. Le script `tools/reconstruire_payload_v218.ps1` valide la source officielle, reconstruit les profils antérieurs puis applique uniquement `translations/corrections-v2.1.8.fr.json` au French V2.1.6. Il modifie uniquement les deux CRC nécessaires dans le nouveau catalogue. Aucun fichier propriétaire n’est ajouté à Git.
+
+
+Guildrun 0.5.10 build 864 (Steam BuildID 25461680) conserve strictement les mêmes Guildrun.exe, English, French, Locales et catalog.bin que le profil 25323618. Aucun nouveau fichier propriétaire ni payload n’est requis ; V2.1.9 ajoute uniquement cet alias de compatibilité.
