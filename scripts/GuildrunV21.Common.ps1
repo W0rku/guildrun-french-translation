@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 function Get-GuildrunV21Policy {
     [CmdletBinding()]
@@ -96,17 +96,22 @@ function Get-GuildrunV21Policy {
             BackupDirectoryName = 'sauvegarde-locale-25060342'
         },
         [pscustomobject]@{
-            Name = 'Steam-25323618-25461680'
-            SteamBuildId = '25461680'
-            CompatibleSteamBuildIds = @('25323618', '25461680')
-            GameVersion = '0.5.10'
-            GameBuild = 864
-            CompatibleGameBuilds = @(842, 864)
+            Name = 'Steam-25323618-25751498'
+            SteamBuildId = '25751498'
+            CompatibleSteamBuildIds = @('25323618', '25461680', '25751498')
+            GameVersion = '0.5.12'
+            GameBuild = 907
+            CompatibleGameBuilds = @(842, 864, 907)
             OriginalEnglishHash = 'EEA30D7E72CA5B0DB8479648B0F15FD03EA956357E06B8E265E12B21E85ADF31'
             OriginalCatalogHash = '4F9FEF5C06A28D8809CBD420A87E584F83EA958498FCFAE40B3DC1883A78110A'
-            PreviousPatchedFrenchHash = $null
-            PreviousPatchedCatalogHash = $null
+            PreviousPatchedFrenchHash = 'E900D7AAC8ED1E7BCEF558D67718CFF6CB00C83B49D41918DB11D0A7257B8B85'
+            PreviousPatchedCatalogHash = 'B6FE63A51A9C317AA06734B23DED044DC0D34FDA3517357609CB8DFA3715719A'
             SteamUpdateSources = @(
+                [pscustomobject]@{
+                    FrenchHash = 'E900D7AAC8ED1E7BCEF558D67718CFF6CB00C83B49D41918DB11D0A7257B8B85'
+                    BackupDirectoryName = 'sauvegarde-locale-25323618'
+                    BackupCatalogHash = '4F9FEF5C06A28D8809CBD420A87E584F83EA958498FCFAE40B3DC1883A78110A'
+                },
                 [pscustomobject]@{
                     FrenchHash = '907B489269EFD5F359C456CA62EC9FB5C77621B8CCB17AE1122F64F9434D321B'
                     BackupDirectoryName = 'sauvegarde-locale-24816645'
@@ -118,9 +123,9 @@ function Get-GuildrunV21Policy {
                     BackupCatalogHash = '80A47C9F8DC2CB85F7DAD8A25E48A9A9CC25397D3616CFB6F206398CD6C0762A'
                 }
             )
-            PatchedFrenchHash = 'E900D7AAC8ED1E7BCEF558D67718CFF6CB00C83B49D41918DB11D0A7257B8B85'
-            PatchedCatalogHash = 'B6FE63A51A9C317AA06734B23DED044DC0D34FDA3517357609CB8DFA3715719A'
-            PayloadFrenchName = 'localization-string-tables-french(fr)_assets_all.v218.bundle'
+            PatchedFrenchHash = 'D8E23CC8C4C1FB925056C1014D9317EDC9FF2E003FDCF20CB95FBECE93BBF885'
+            PatchedCatalogHash = 'F8FD7F62131E2A23EAB04B1C29053ABDBD5FF8587ED991D0FF90102FC842CCF5'
+            PayloadFrenchName = 'localization-string-tables-french(fr)_assets_all.v2110.bundle'
             PayloadCatalogName = 'catalog-25323618.bin'
             BackupDirectoryName = 'sauvegarde-locale-25323618'
         }
@@ -268,7 +273,7 @@ function Get-GuildrunV21State {
     }
 
     if ($matches.Count -ne 1) {
-        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.9 sont acceptes. Aucun fichier n'a ete modifie."
+        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.10 sont acceptes. Aucun fichier n'a ete modifie."
     }
 
     $selected = $matches[0]

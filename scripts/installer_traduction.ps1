@@ -1,10 +1,11 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
-    [string] $GameRoot = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
+    [string] $GameRoot = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $v21Root = Split-Path -Parent $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($GameRoot)) { $GameRoot = Split-Path -Parent $v21Root }
 . (Join-Path $PSScriptRoot 'GuildrunV21.Common.ps1')
 
 try {
@@ -13,7 +14,7 @@ try {
         Write-Host 'La traduction compatible avec cette version du jeu etait deja installee. Le Locale fr a ete confirme.'
     }
     else {
-        Write-Host 'Traduction francaise V2.1.9 installee ou reactivee. French est visible, le Locale fr est selectionne et English est intact.'
+        Write-Host 'Traduction francaise V2.1.10 installee ou reactivee. French est visible, le Locale fr est selectionne et English est intact.'
     }
     Write-Host "Sauvegarde locale exacte : $($result.BackupRoot)"
 }

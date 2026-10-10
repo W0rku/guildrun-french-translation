@@ -1,18 +1,18 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param()
 
 $ErrorActionPreference = 'Stop'
 $installerRoot = $PSScriptRoot
 $v21Root = Split-Path -Parent $installerRoot
 $csc = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.9.exe'
+$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.10.exe'
 $source = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.cs'
 $updateSource = Join-Path $installerRoot 'InstallerUpdateService.cs'
 $manifest = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.manifest'
 $common = Join-Path $v21Root 'scripts\GuildrunV21.Common.ps1'
 $install = Join-Path $v21Root 'scripts\installer_traduction.ps1'
 $restore = Join-Path $v21Root 'scripts\restaurer_sauvegarde.ps1'
-$frenchV218 = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.v218.bundle'
+$frenchV218 = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.v2110.bundle'
 $catalog25323618 = Join-Path $v21Root 'payload\catalog-25323618.bin'
 $frenchCurrent = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.bundle'
 $frenchV213 = Join-Path $v21Root 'payload\localization-string-tables-french(fr)_assets_all.v213.bundle'
@@ -107,5 +107,5 @@ $arguments = @(
 )
 & $csc $arguments
 if ($LASTEXITCODE -ne 0) { throw "Compilation echouee avec le code $LASTEXITCODE." }
-Write-Host "Installateur V2.1.9 multi-BuildID compile : $output"
+Write-Host "Installateur V2.1.10 multi-BuildID compile : $output"
 Write-Host "SHA-256 : $((Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash)"

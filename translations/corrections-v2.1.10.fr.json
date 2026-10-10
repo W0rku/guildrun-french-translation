@@ -1,0 +1,16 @@
+{
+  "version": "2.1.10",
+  "baselineSha256": "E900D7AAC8ED1E7BCEF558D67718CFF6CB00C83B49D41918DB11D0A7257B8B85",
+  "corrections": [
+    {
+      "table": "UI",
+      "id": "12991570278858760",
+      "text": "Réduit les dégâts reçus. 100 de Défense = 1/2 des dégâts reçus, 200 de Défense = 1/3 des dégâts reçus, 300 de Défense = 1/4 des dégâts reçus, etc."
+    },
+    {
+      "table": "UI",
+      "id": "12991570278858758",
+      "text": "La quantité de Mana que ce personnage gagne toutes les 2 secondes."
+    }
+  ]
+}

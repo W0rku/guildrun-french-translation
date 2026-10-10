@@ -1,77 +1,38 @@
 # Guildrun — Traduction française
 
-> Traduction communautaire non officielle pour Guildrun Demo.
+Traduction communautaire non officielle pour Guildrun Demo. Ajoute **French (fr)** au menu des langues, avec sauvegarde et restauration exactes. English reste disponible.
 
-Ce projet ajoute **Français** comme une véritable langue dans le menu du jeu. La traduction française possède son propre Locale et ses propres textes : elle ne remplace pas **English**, qui reste intact et disponible à tout moment.
+## Version finale V2.1.10
 
-L’installation est contrôlée, sauvegarde les fichiers concernés et peut restaurer exactement leur état précédent.
+Compatible avec **Guildrun Demo 0.5.12, build 907, Steam BuildID 25751498**.
 
-## Version V2.1.9
-
-Guildrun a été mis à jour en version `0.5.10`, build `864`, Steam BuildID `25461680`. La V2.1.9 reconnaît cette version et conserve les huit BuildID antérieurs déjà compatibles.
-
-Les cinq fichiers contrôlés par l’installateur — Guildrun.exe, English, French, Locales et catalog.bin — sont strictement identiques au profil 0.5.9. Aucun bundle, catalogue ni texte traduit n’a donc été modifié : seul le nouveau BuildID est ajouté au profil existant.
-
-Steam peut conserver un ancien French V2.1.4 ou V2.1.6 avec le catalogue officiel. L’installateur ne reprend cet état qu’avec la sauvegarde officielle correspondante, conserve la préférence antérieure et réactive `fr` transactionnellement.
-
-L’installateur vérifie également en arrière-plan la dernière Release publique stable. Le statut de sa propre version reste distinct de la compatibilité Guildrun : une panne GitHub ne bloque jamais l’installation ou la restauration du patch. Lorsqu’une version plus récente existe, le bouton **Mettre à jour** télécharge son EXE, contrôle son SHA-256, puis valide son identité et sa version internes avant lancement.
-
-L’audit porte sur **3 923 clés** : aucune clé manquante, aucun argument, aucune balise de gameplay et aucune métadonnée Smart String divergents. L’ensemble passe **46/46 tests automatisés**. Voir le [fonctionnement de la mise à jour automatique](docs/MISE_A_JOUR_INSTALLATEUR.md).
-
-La V2.1.9 est la version stable actuelle. Les installateurs précédents la proposent automatiquement. Voir le [contrôle de compatibilité V2.1.9](docs/AUDIT_COMPATIBILITE_V2.1.9.md).
+- L’installation reprend les fichiers de traduction conservés par Steam après une mise à jour et réactive le français.
+- L’infobulle **Défense** affiche l’explication complète : 100 de Défense = 1/2 des dégâts reçus, 200 = 1/3, 300 = 1/4, etc.
+- L’infobulle **Régénération de mana** indique le mana gagné **toutes les 2 secondes**.
+- Les installations V2.1.8 et V2.1.9 sont mises à niveau en conservant leur sauvegarde originale.
 
 ## Installation
 
-1. Télécharger `Guildrun_Demo_FR_Installer_V2.1.9.exe` depuis la page [Releases](https://github.com/W0rku/guildrun-french-translation/releases).
-2. Fermer Guildrun.
-3. Lancer l’installateur, sélectionner le dossier du jeu et installer le français.
+1. Télécharger [Guildrun_Demo_FR_Installer_V2.1.10.exe](https://github.com/W0rku/guildrun-french-translation/releases/latest/download/Guildrun_Demo_FR_Installer_V2.1.10.exe).
+2. Fermer Guildrun, lancer l’installateur et sélectionner le dossier contenant `Guildrun.exe`.
+3. Installer le français. Au prochain lancement, sélectionner **French (fr)** si nécessaire.
 
-Au prochain lancement, choisir **French (fr)** dans les paramètres de langue si nécessaire.
+L’installateur vérifie automatiquement les nouvelles versions publiées sur GitHub. Le bouton **Mettre à jour** contrôle l’empreinte et la version interne du fichier téléchargé. Voir [la mise à jour automatique](docs/MISE_A_JOUR_INSTALLATEUR.md).
 
-## Revenir en anglais ou restaurer le jeu
+## Restauration
 
-- **English reste disponible dans le jeu** : pour jouer en anglais sans retirer la traduction, sélectionner simplement **English** dans le menu des langues.
-- Pour retirer les modifications de la traduction, fermer le jeu, relancer le même installateur et choisir **Restaurer**. Cette fonction remet les fichiers et la préférence de langue exactement dans leur état précédent.
+Pour jouer en anglais, sélectionner **English** dans les paramètres. Pour retirer le patch, fermer le jeu et choisir **Restaurer** dans l’installateur : les fichiers officiels et la préférence de langue antérieure sont restaurés.
 
-## Compatibilité
+## Compatibilité et validation
 
-- Guildrun Demo `0.5.3`, build `748`
-- Steam BuildID `24551494`
-- Steam BuildID `24613101`
-- Guildrun Demo `0.5.4`, build `767`
-- Steam BuildID `24690909`
-- Guildrun Demo `0.5.5`, build `783`
-- Steam BuildID `24816645`
-- Guildrun Demo `0.5.6`, build `792`
-- Steam BuildID `24930839`
-- Guildrun Demo `0.5.7`, build `814`
-- Steam BuildID `25060342`
-- Guildrun Demo `0.5.7`, build `824`
-- Steam BuildID `25119884`
-- Guildrun Demo `0.5.9`, build `842`
-- Steam BuildID `25323618`
-- Guildrun Demo `0.5.10`, build `864`
-- Steam BuildID `25461680`
-- Windows x64 / Steam
+Windows x64 / Steam. Profils validés : 0.5.3 (748), 0.5.4 (767), 0.5.5 (783), 0.5.6 (792), 0.5.7 (814/824), 0.5.9 (842), 0.5.10 (864) et 0.5.12 (907). Une version dont les empreintes sont inconnues est refusée avant écriture.
 
-Une mise à jour de Guildrun peut modifier les fichiers contrôlés par l’installateur et nécessiter une nouvelle version du patch. Si la version est inconnue, l’installation est refusée sans modifier le jeu.
+**47/47 tests automatisés** : installation, migration après Steam, mise à niveau V2.1.9, restauration, rollback, identité de l’EXE et mise à jour automatique. Audit des **3 923 clés** : aucune clé manquante, aucun argument, balisage de gameplay ou Smart String divergent. Voir [le contrôle V2.1.10](docs/AUDIT_COMPATIBILITE_V2.1.10.md).
 
-## Téléchargement et vérification
+La page [Releases](https://github.com/W0rku/guildrun-french-translation/releases) contient uniquement la version finale actuelle.
 
-La version stable est disponible dans les [Releases GitHub](https://github.com/W0rku/guildrun-french-translation/releases/tag/v2.1.9).
+## Sources
 
-**Guildrun_Demo_FR_Installer_V2.1.9.exe**
+Le dépôt contient le code de l’installateur, les scripts, les corrections et les tests. Les bundles, catalogues et sauvegardes propriétaires ne sont pas inclus dans Git. La licence couvre le code propre au projet : [LICENSE](LICENSE), [NOTICE](NOTICE).
 
-```text
-SHA-256  FC838EC524DD1992F1637AC431C1062EA16E3B460EB7F96FC02A025C2D9E4CD6
-```
-
-La V2.1.9 a réussi **46/46 tests automatisés**, y compris la compatibilité avec les sept BuildID, la reprise des installations V2.1.4 et V2.1.6 après mise à jour Steam, la restauration exacte, le refus sans écriture d’un état inconnu, les rollbacks et la mise à jour automatique.
-
-## Code source et fichiers du jeu
-
-Le code source de l’installateur, les scripts, les tests et la documentation sont visibles dans ce dépôt. Les bundles, catalogues, sauvegardes, payloads et autres fichiers propriétaires de Guildrun ne sont pas inclus dans Git.
-
-La licence du dépôt couvre uniquement le code propre au projet. Voir [LICENSE](LICENSE) et [NOTICE](NOTICE).
-
-Guildrun est la propriété de ses ayants droit. Ce projet n’est ni affilié, ni approuvé, ni soutenu par Leyline.
+SHA-256 de l’installateur : `4CBDAEB810285C45633E31C1D1A14FF9DAA8B21181F54C0A0848145A06D0AFD6`
