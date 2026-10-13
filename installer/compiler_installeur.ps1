@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 $installerRoot = $PSScriptRoot
 $v21Root = Split-Path -Parent $installerRoot
 $csc = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.10.exe'
+$output = Join-Path $installerRoot 'Guildrun_Demo_FR_Installer_V2.1.11.exe'
 $source = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.cs'
 $updateSource = Join-Path $installerRoot 'InstallerUpdateService.cs'
 $manifest = Join-Path $installerRoot 'GuildrunFrenchInstallerV21.manifest'
@@ -107,5 +107,5 @@ $arguments = @(
 )
 & $csc $arguments
 if ($LASTEXITCODE -ne 0) { throw "Compilation echouee avec le code $LASTEXITCODE." }
-Write-Host "Installateur V2.1.10 multi-BuildID compile : $output"
+Write-Host "Installateur V2.1.11 multi-BuildID compile : $output"
 Write-Host "SHA-256 : $((Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash)"

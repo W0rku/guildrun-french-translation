@@ -96,12 +96,12 @@ function Get-GuildrunV21Policy {
             BackupDirectoryName = 'sauvegarde-locale-25060342'
         },
         [pscustomobject]@{
-            Name = 'Steam-25323618-25751498'
-            SteamBuildId = '25751498'
-            CompatibleSteamBuildIds = @('25323618', '25461680', '25751498')
-            GameVersion = '0.5.12'
-            GameBuild = 907
-            CompatibleGameBuilds = @(842, 864, 907)
+            Name = 'Steam-25323618-25907365'
+            SteamBuildId = '25907365'
+            CompatibleSteamBuildIds = @('25323618', '25461680', '25751498', '25907365')
+            GameVersion = '0.5.13'
+            GameBuild = 944
+            CompatibleGameBuilds = @(842, 864, 907, 944)
             OriginalEnglishHash = 'EEA30D7E72CA5B0DB8479648B0F15FD03EA956357E06B8E265E12B21E85ADF31'
             OriginalCatalogHash = '4F9FEF5C06A28D8809CBD420A87E584F83EA958498FCFAE40B3DC1883A78110A'
             PreviousPatchedFrenchHash = 'E900D7AAC8ED1E7BCEF558D67718CFF6CB00C83B49D41918DB11D0A7257B8B85'
@@ -273,7 +273,7 @@ function Get-GuildrunV21State {
     }
 
     if ($matches.Count -ne 1) {
-        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.10 sont acceptes. Aucun fichier n'a ete modifie."
+        throw "Version inconnue ou etat partiellement patche : seuls les profils Guildrun officiels reconnus et les installations completes V2.1.1 a V2.1.11 sont acceptes. Aucun fichier n'a ete modifie."
     }
 
     $selected = $matches[0]
